@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ChatGPT Page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vuetify/3.1.11/vuetify.min.css"/>
+  </head>
+  <body>
+    <script type="importmap">
+      {
+        "imports": {
+          "vue": "https://unpkg.com/vue@3.2.47/dist/vue.esm-browser.prod.js",
+          "vuetify": "https://cdnjs.cloudflare.com/ajax/libs/vuetify/3.1.11/vuetify.esm.min.js"
+        }
+      }
+    </script>
+    <div id="app"></div>
+    <script type="module">
+      import { createApp } from 'vue';
+      import { createVuetify } from 'vuetify';
+      import App from './app.js';
+
+      const vuetify = createVuetify();
+      const app = createApp(App);
+      app.use(vuetify).mount('#app')
+    </script>
+  </body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "name": "chatgpt-page",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "ts-node index.ts"
+  },
+  "author": "nossika",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.26.1",
+    "https-proxy-agent": "^5.0.1",
+    "koa": "^2.14.1",
+    "koa-bodyparser": "^4.4.0",
+    "koa-static": "^5.0.0",
+    "log4js": "^6.9.1",
+    "minimist": "^1.2.8",
+    "openai": "^3.2.1",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.1.2",
+    "typescript": "^5.0.2"
+  },
+  "devDependencies": {
+    "@types/koa": "^2.13.5",
+    "@types/koa-bodyparser": "^4.3.10"
+  }
+}
