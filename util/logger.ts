@@ -6,11 +6,11 @@ log4js.configure({
   appenders: {
     file: {
       type: 'dateFile',
-      pattern: '.yyyy-MM-dd.log',
+      pattern: 'yyyy-MM-dd.log',
       alwaysIncludePattern: true,
       encoding: 'utf-8',
       filename: path.resolve(__dirname, '..', 'logs', 'access'),
-      numBackups: 1,
+      numBackups: 3,
     },
   },
   categories: {
