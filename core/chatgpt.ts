@@ -1,4 +1,4 @@
-import { Configuration, OpenAIApi } from 'openai';
+import { ChatCompletionRequestMessage, ChatCompletionRequestMessageRoleEnum, Configuration, OpenAIApi } from 'openai';
 import request from '@/util/request';
 
 class ChatGPT {
@@ -20,13 +20,16 @@ class ChatGPT {
     this.openai = openai;
   }
 
-  async ask(message: string) {
+  async ask(message: string, context?: ChatCompletionRequestMessage[]) {
+    const messages = context?.slice() || [];
+    messages.push({
+      role: ChatCompletionRequestMessageRoleEnum.User,
+      content: message,
+    });
+
     const res = await this.openai.createChatCompletion({
       model: 'gpt-3.5-turbo',
-      messages: [{
-        role: 'user',
-        content: message,
-      }]
+      messages,
     });
 
     const content = res.data.choices[0]?.message?.content;

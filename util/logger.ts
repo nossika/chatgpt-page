@@ -32,10 +32,9 @@ export const logger = (message: string, ctx: ParameterizedContext, type: 'info' 
   originLogger.info(log);
 }
 
-export const useLogger = (): Middleware => {
+export const useAccessLogger = (): Middleware => {
   return async (ctx, next) => {
-    const log = ` ${JSON.stringify(ctx.request.body)}`;
-    logger(log, ctx);
+    logger('access', ctx);
     await next();
   };
 };
