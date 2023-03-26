@@ -16,7 +16,7 @@ const chatGPT = new ChatGPT({
   org: secret.org,
 });
 
-app.use(serve(path.resolve(__dirname, 'statics')));
+app.use(serve(path.resolve(__dirname, 'public')));
 
 app.use(bodyParser());
 

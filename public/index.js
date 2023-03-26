@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+const { ref } = Vue;
 
 const request = {
   post: async (url, data) => {
@@ -64,5 +64,9 @@ const App = {
   template,
 };
 
-    
-export default App;
+const { createApp } = Vue;
+const { createVuetify } = Vuetify;
+
+const vuetify = createVuetify();
+const app = createApp(App);
+app.use(vuetify).mount('#app');
