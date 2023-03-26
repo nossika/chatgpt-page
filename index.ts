@@ -33,7 +33,7 @@ app.use(async (ctx, next) => {
     context?: { type: 'Q' | 'A', content: string }[];
   } = ctx.request.body;
 
-  if (!question || !context || context.some(c => !c.content || !['Q', 'A'].includes(c.type))) {
+  if (!question || !Array.isArray(context) || context.some(c => !c.content || !['Q', 'A'].includes(c.type))) {
     ctx.body = response('invalid params', Code.clientError);
     return;
   }
