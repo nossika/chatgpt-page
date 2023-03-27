@@ -1,3 +1,26 @@
+const template = `
+<div style="padding: 20px;">
+  <v-card v-for="(c, i) in conversations" style="margin-bottom: 20px; padding: 10px; display: flex;" :loading="loading && i === conversations.length - 1">
+    <v-chip style="flex-grow: 0; flex-shrink: 0; margin-right: 10px; margin-top: 6px;"
+      label
+      :color="{[conversationType.Q]: 'primary', [conversationType.A]: 'cyan'}[c.type]"
+    >
+      {{ c.type }}
+    </v-chip>
+    <pre style="padding: 10px; white-space: pre-wrap; border: 1px solid #eee; flex-grow: 1; flex-shrink: 1;">{{ c.content }}</pre>
+  </v-card>
+  <div>
+    <v-textarea label="your message" variant="outlined" :value="message" @input="setMessage" @keyup.ctrl.enter="sendMessage" placeholder="Use Ctrl + Enter to send">
+      <template v-slot:append>
+        <v-btn @click="sendMessage" :loading="loading" :disabled="!message">
+          SEND
+        </v-btn>
+      </template>
+    </v-textarea>
+  </div>
+</div>
+`;
+
 const { ref, reactive } = Vue;
 
 const request = {
@@ -45,29 +68,6 @@ const parseStreamData = (data) => {
     })
     .filter(s => !!s);
 };
-
-const template = `
-<div style="padding: 20px;">
-  <v-card v-for="(c, i) in conversations" style="margin-bottom: 20px; padding: 10px; display: flex;" :loading="loading && i === conversations.length - 1">
-    <v-chip style="flex-grow: 0; flex-shrink: 0; margin-right: 10px; margin-top: 6px;"
-      label
-      :color="{[conversationType.Q]: 'primary', [conversationType.A]: 'cyan'}[c.type]"
-    >
-      {{ c.type }}
-    </v-chip>
-    <pre style="padding: 10px; white-space: pre-wrap; border: 1px solid #eee; flex-grow: 1; flex-shrink: 1;">{{ c.content }}</pre>
-  </v-card>
-  <div>
-  <v-text-field label="your message" variant="outlined" :value="message" @input="setMessage" @keyup.enter="sendMessage">
-    <template v-slot:append>
-      <v-btn class="mt-n2" @click="sendMessage" :loading="loading" :disabled="!message">
-        SEND
-      </v-btn>
-    </template>
-  </v-text-field>
-</div>
-</div>
-`;
 
 const App = {
   setup() {
