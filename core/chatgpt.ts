@@ -1,6 +1,8 @@
 import { ChatCompletionRequestMessage, ChatCompletionRequestMessageRoleEnum, Configuration, OpenAIApi } from 'openai';
 import request from '@/util/request';
 
+const model = 'gpt-3.5-turbo';
+
 class ChatGPT {
   private openai: OpenAIApi;
   constructor({
@@ -20,7 +22,7 @@ class ChatGPT {
     this.openai = openai;
   }
 
-  async ask(message: string, context?: ChatCompletionRequestMessage[]) {
+  async sendMessage(message: string, context?: ChatCompletionRequestMessage[]) {
     const messages = context?.slice() || [];
     messages.push({
       role: ChatCompletionRequestMessageRoleEnum.User,
@@ -28,7 +30,7 @@ class ChatGPT {
     });
 
     const res = await this.openai.createChatCompletion({
-      model: 'gpt-3.5-turbo',
+      model,
       messages,
     });
 

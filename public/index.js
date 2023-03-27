@@ -25,10 +25,10 @@ const template = `
     <pre style="padding: 10px; white-space: pre-wrap; border: 1px solid #eee; flex-grow: 1; flex-shrink: 1;">{{ c.content }}</pre>
   </v-card>
   <div>
-  <v-text-field label="your question" variant="outlined" :question="question" @input="setQuestion" @keyup.enter="ask" :loading="loading" :value="question">
+  <v-text-field label="your message" variant="outlined" :value="message" @input="setMessage" @keyup.enter="sendMessage" :loading="loading">
     <template v-slot:append>
-      <v-btn class="mt-n2" @click="ask" :loading="loading" :disabled="!question">
-        ASK
+      <v-btn class="mt-n2" @click="sendMessage" :loading="loading" :disabled="!message">
+        SEND
       </v-btn>
     </template>
   </v-text-field>
@@ -39,49 +39,50 @@ const template = `
 const App = {
   setup() {
     const loading = ref(false);
-    const question = ref('');
+    const message = ref('');
     const conversations = reactive([]);
     const conversationType = {
       Q: 'Q',
       A: 'A',
     };
 
-    const ask = async () => {
-      if (loading.value || !question.value) return;
+    const sendMessage = async () => {
+      if (loading.value || !message.value) return;
       loading.value = true;
-      const q = question.value;
+      const m = message.value;
+      const context = conversations.slice();
 
       conversations.push({
         type: conversationType.Q,
-        content: q,
+        content: m,
       });
 
-      question.value = '';
+      message.value = '';
 
-      const res = await request.post('/ask', {
-        question: q,
-        context: conversations,
+      const res = await request.post('/message', {
+        message: m,
+        context,
       });
 
-      const a = res.data;
+      const answer = res.data;
 
       conversations.push({
         type: conversationType.A,
-        content: a,
+        content: answer,
       });
 
       loading.value = false;
     };
 
-    const setQuestion = (event) => {
-      question.value = event.target.value;
+    const setMessage = (event) => {
+      message.value = event.target.value;
     };
 
     return {
-      question,
-      setQuestion,
+      message,
+      setMessage,
       loading,
-      ask,
+      sendMessage,
       conversations,
       conversationType,
     };
