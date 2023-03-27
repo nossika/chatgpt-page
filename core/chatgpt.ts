@@ -38,6 +38,28 @@ class ChatGPT {
   
     return content;
   }
+
+  async getMessageStream(message: string, context?: ChatCompletionRequestMessage[]) {
+    const messages = context?.slice() || [];
+    messages.push({
+      role: ChatCompletionRequestMessageRoleEnum.User,
+      content: message,
+    });
+
+    const res = await this.openai.createChatCompletion({
+      model,
+      messages,
+      stream: true,
+    }, {
+      responseType: 'stream',
+    });
+
+    return res.data as any as Receiver;
+  }
+}
+
+export interface Receiver {
+  on: (type: 'data' | 'end', handler: (data: Buffer) => void) => void;
 }
 
 export default ChatGPT;

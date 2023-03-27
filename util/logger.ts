@@ -34,7 +34,7 @@ export const logger = (message: string, ctx: ParameterizedContext, type: 'info' 
 
 export const useAccessLogger = (): Middleware => {
   return async (ctx, next) => {
-    logger('access', ctx);
+    logger('➡️', ctx);
     await next();
   };
 };

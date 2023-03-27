@@ -7,7 +7,7 @@ import argv from '@/util/argv';
 import ChatGPT from '@/core/chatgpt';
 import { Code, response } from '@/util/response';
 import { useAccessLogger } from '@/util/logger';
-import messageRoute from '@/router/message';
+import { messageRoute, messageStreamRoute } from '@/router/message';
 import secret from '@/secret.json';
 
 export const chatGPT = new ChatGPT({
@@ -17,14 +17,20 @@ export const chatGPT = new ChatGPT({
 
 const app = new Koa();
 
+// serve static files
 app.use(serve(path.resolve(__dirname, 'public')));
 
+// parse request body
 app.use(bodyParser());
 
+// logger
 app.use(useAccessLogger());
 
+// path route
 app.use(messageRoute);
+app.use(messageStreamRoute);
 
+// 404
 app.use(async (ctx) => {
   ctx.status = 404;
   ctx.body = response('404', Code.clientError);

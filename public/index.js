@@ -11,11 +11,44 @@ const request = {
     });
     return response.json();
   },
-}
+  stream: async (url, data) => {
+    const response = await window.fetch(url, {
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    return response.body.getReader();
+  }
+};
+
+const decoder = new TextDecoder();
+
+const parseStreamData = (data) => {
+  const str = decoder.decode(data);
+
+  return str
+    .split('\n')
+    .map(s => s.trim())
+    .filter(s => !!s)
+    .map(s => {
+      const JSONStr = s.replace('data: ', '');
+      let json;
+      try {
+        json = JSON.parse(JSONStr);
+      } catch (err) {
+        json = null;
+      }
+      return json;
+    })
+    .filter(s => !!s);
+};
 
 const template = `
 <div style="padding: 20px;">
-  <v-card v-for="c in conversations" style="margin-bottom: 20px; padding: 10px; display: flex;">
+  <v-card v-for="(c, i) in conversations" style="margin-bottom: 20px; padding: 10px; display: flex;" :loading="loading && i === conversations.length - 1">
     <v-chip style="flex-grow: 0; flex-shrink: 0; margin-right: 10px; margin-top: 6px;"
       label
       :color="{[conversationType.Q]: 'primary', [conversationType.A]: 'cyan'}[c.type]"
@@ -25,7 +58,7 @@ const template = `
     <pre style="padding: 10px; white-space: pre-wrap; border: 1px solid #eee; flex-grow: 1; flex-shrink: 1;">{{ c.content }}</pre>
   </v-card>
   <div>
-  <v-text-field label="your message" variant="outlined" :value="message" @input="setMessage" @keyup.enter="sendMessage" :loading="loading">
+  <v-text-field label="your message" variant="outlined" :value="message" @input="setMessage" @keyup.enter="sendMessage">
     <template v-slot:append>
       <v-btn class="mt-n2" @click="sendMessage" :loading="loading" :disabled="!message">
         SEND
@@ -59,17 +92,34 @@ const App = {
 
       message.value = '';
 
-      const res = await request.post('/message', {
-        message: m,
-        context,
-      });
-
-      const answer = res.data;
-
       conversations.push({
         type: conversationType.A,
-        content: answer,
+        content: '',
       });
+      
+      // get reactive obejct
+      const answer = conversations[conversations.length - 1];
+
+      try {
+        const stream = await request.stream('/message-stream', {
+          message: m,
+          context,
+        });
+
+        while (true) {
+          const { value, done } = await stream.read();
+          if (done) break;
+
+          const datas = parseStreamData(value);
+
+          datas.forEach(data => {
+            const chunk = data.choices[0].delta.content || '';
+            answer.content += chunk;
+          });
+        }
+      } catch (err) {
+        answer.content = err.toString();
+      }
 
       loading.value = false;
     };
