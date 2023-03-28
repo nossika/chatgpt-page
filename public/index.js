@@ -49,13 +49,12 @@ const request = {
 
 const decoder = new TextDecoder();
 
-const parseStreamData = (uint8Array, lastRemain = '') => {
-  const originStr = lastRemain + decoder.decode(uint8Array);
-
-  let remain = '';
+const parseStreamData = (uint8Array, lastRemainStr = '') => {
+  const originStr = decoder.decode(uint8Array);
+  let remainStr = '';
 
   // split originStr by line
-  const dataStrs = originStr
+  const dataStrs = (lastRemainStr + originStr)
     .split('\n')
     .map(s => s.trim())
     .filter(s => !!s);
@@ -73,16 +72,33 @@ const parseStreamData = (uint8Array, lastRemain = '') => {
       if (i === dataStrs.length - 1) {
         // if the last line cannot be parsed, it is usually because the line is incomplete, and it should be left over for the next parsing
         // @fixeme: last char may be decode to �
-        remain = dataStrs[i];
+        remainStr = dataStrs[i];
       }
     }
-  }
+  };
 
   return {
     jsons,
-    remain,
+    remainStr,
   };
 };
+
+const concatUint8Arrays = (uint8Arrays) => {
+  let length = 0;
+  for (const a of uint8Arrays) {
+    length += a.length;
+  }
+
+  const arr = new Uint8Array(length);
+
+  let offset = 0;
+  for (const a of uint8Arrays) {
+    arr.set(a, offset);
+    offset += a.length;
+  }
+
+  return arr;
+}
 
 const App = {
   setup() {
@@ -121,20 +137,32 @@ const App = {
           context,
         });
 
-        let dataRemain = '';
+        let lastRemainStr = '';
+        const uint8Arrays = [];
 
         while (true) {
           const { value, done } = await stream.read();
           if (done) break;
+          uint8Arrays.push(value);
 
-          const { jsons, remain } = parseStreamData(value, dataRemain);
-          dataRemain = remain;
+          const { jsons, remainStr } = parseStreamData(value, lastRemainStr);
+          lastRemainStr = remainStr;
 
           jsons.forEach(data => {
             const chunk = data.choices[0].delta.content || '';
             answer.content += chunk;
           });
         }
+
+        // to avoid parsing errors caused by inconsistent data, the complete data will be parsed again to ensure coherence
+        const uint8Array = concatUint8Arrays(uint8Arrays);
+        const { jsons } = parseStreamData(uint8Array);
+        let content = '';
+        jsons.forEach(data => {
+          const chunk = data.choices[0].delta.content || '';
+          content += chunk;
+        });
+        answer.content = content;
       } catch (err) {
         answer.content = err.toString();
       }
