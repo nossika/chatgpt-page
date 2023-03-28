@@ -49,24 +49,39 @@ const request = {
 
 const decoder = new TextDecoder();
 
-const parseStreamData = (data) => {
-  const str = decoder.decode(data);
+const parseStreamData = (uint8Array, lastRemain = '') => {
+  const originStr = lastRemain + decoder.decode(uint8Array);
 
-  return str
+  let remain = '';
+
+  // split originStr by line
+  const dataStrs = originStr
     .split('\n')
     .map(s => s.trim())
-    .filter(s => !!s)
-    .map(s => {
-      const JSONStr = s.replace('data: ', '');
-      let json;
-      try {
-        json = JSON.parse(JSONStr);
-      } catch (err) {
-        json = null;
-      }
-      return json;
-    })
     .filter(s => !!s);
+
+  const jsons = [];
+
+  for (let i = 0; i < dataStrs.length; i += 1) {
+    // each line starts with 'data: '
+    const JSONStr = dataStrs[i].replace('data: ', '');
+    let json;
+    try {
+      json = JSON.parse(JSONStr);
+      json && jsons.push(json);
+    } catch (err) {
+      if (i === dataStrs.length - 1) {
+        // if the last line cannot be parsed, it is usually because the line is incomplete, and it should be left over for the next parsing
+        // @fixeme: last char may be decode to �
+        remain = dataStrs[i];
+      }
+    }
+  }
+
+  return {
+    jsons,
+    remain,
+  };
 };
 
 const App = {
@@ -106,13 +121,16 @@ const App = {
           context,
         });
 
+        let dataRemain = '';
+
         while (true) {
           const { value, done } = await stream.read();
           if (done) break;
 
-          const datas = parseStreamData(value);
+          const { jsons, remain } = parseStreamData(value, dataRemain);
+          dataRemain = remain;
 
-          datas.forEach(data => {
+          jsons.forEach(data => {
             const chunk = data.choices[0].delta.content || '';
             answer.content += chunk;
           });
