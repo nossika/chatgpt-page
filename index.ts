@@ -4,13 +4,14 @@ import Koa from 'koa';
 import serve from 'koa-static';
 import bodyParser from 'koa-bodyparser';
 import argv from '@/util/argv';
-import ChatGPT from '@/core/chatgpt';
+import chatGPT from '@/core/chatgpt';
 import { Code, response } from '@/util/response';
 import { useAccessLogger } from '@/util/logger';
 import { messageRoute, messageStreamRoute } from '@/router/message';
+import { drawImageRoute } from '@/router/image';
 import secret from '@/secret.json';
 
-export const chatGPT = new ChatGPT({
+chatGPT.init({
   key: secret.key,
   org: secret.org,
 });
@@ -29,6 +30,7 @@ app.use(useAccessLogger());
 // path route
 app.use(messageRoute);
 app.use(messageStreamRoute);
+app.use(drawImageRoute);
 
 // 404
 app.use(async (ctx) => {

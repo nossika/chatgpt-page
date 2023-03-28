@@ -3,11 +3,12 @@ import { Middleware } from 'koa';
 import { PassThrough } from 'stream';
 import { logger } from '@/util/logger';
 import { Code, response } from '@/util/response';
-import { Receiver } from '@/core/chatgpt';
-import { chatGPT } from '..';
+import chatGPT, { Receiver } from '@/core/chatgpt';
 
-const route = '/message';
-const streamRoute = '/message-stream';
+const ROUTE = {
+  message: '/message',
+  messageStream: '/message-stream',
+};
 
 interface MessageParams {
   message: string;
@@ -25,7 +26,7 @@ const extraParams = (params: unknown): MessageParams | null => {
 }
 
 export const messageRoute: Middleware = async (ctx, next) => {
-  if (ctx.url !== route) {
+  if (ctx.url !== ROUTE.message) {
     return await next();
   }
 
@@ -41,7 +42,7 @@ export const messageRoute: Middleware = async (ctx, next) => {
   logger(`message: ${message}`, ctx);
 
   let error;
-  const answer = await chatGPT.sendMessage(message, context.map(c => ({
+  const answer = await chatGPT.get().sendMessage(message, context.map(c => ({
     role: {
       Q: ChatCompletionRequestMessageRoleEnum.User,
       A: ChatCompletionRequestMessageRoleEnum.Assistant,
@@ -64,7 +65,7 @@ export const messageRoute: Middleware = async (ctx, next) => {
 };
 
 export const messageStreamRoute: Middleware = async (ctx, next) => {
-  if (ctx.url !== streamRoute) {
+  if (ctx.url !== ROUTE.messageStream) {
     return await next();
   }
 
@@ -80,7 +81,7 @@ export const messageStreamRoute: Middleware = async (ctx, next) => {
   logger(`message: ${message}`, ctx);
 
   let error;
-  const receiver = await chatGPT.getMessageStream(message, context.map(c => ({
+  const receiver = await chatGPT.get().getMessageStream(message, context.map(c => ({
     role: {
       Q: ChatCompletionRequestMessageRoleEnum.User,
       A: ChatCompletionRequestMessageRoleEnum.Assistant,

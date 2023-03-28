@@ -56,11 +56,43 @@ class ChatGPT {
 
     return res.data as any as Receiver;
   }
+
+  async drawImage(description: string) {
+    const res = await this.openai.createImage({
+      prompt: description,
+      n: 1,
+    });
+
+    return res.data.data[0]?.url || '';
+  }
 }
 
 export interface Receiver {
   on: (type: 'data' | 'end', handler: (data: Buffer) => void) => void;
 }
 
-export default ChatGPT;
+let instance: ChatGPT | null = null;
 
+const chatGPT = {
+  init: ({
+    key,
+    org,
+  }: {
+    key: string,
+    org: string,
+  }) => {
+    instance = new ChatGPT({
+      key,
+      org,
+    });
+  },
+  get: () => {
+    if (!instance) {
+      throw new Error('Cannot get before init');
+    }
+
+    return instance;
+  },
+};
+
+export default chatGPT;
