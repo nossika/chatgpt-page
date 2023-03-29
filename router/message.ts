@@ -5,11 +5,6 @@ import { logger } from '@/util/logger';
 import { Code, response } from '@/util/response';
 import chatGPT, { Receiver } from '@/core/chatgpt';
 
-const ROUTE = {
-  message: '/message',
-  messageStream: '/message-stream',
-};
-
 interface MessageParams {
   message: string;
   context: { type: 'Q' | 'A', content: string }[];
@@ -25,11 +20,7 @@ const extraParams = (params: unknown): MessageParams | null => {
   return { message, context };
 }
 
-export const messageRoute: Middleware = async (ctx, next) => {
-  if (ctx.url !== ROUTE.message) {
-    return await next();
-  }
-
+export const messageRoute: Middleware = async (ctx) => {
   const params = extraParams(ctx.request.body);
 
   if (!params) {
@@ -64,11 +55,7 @@ export const messageRoute: Middleware = async (ctx, next) => {
   ctx.body = response(answer)
 };
 
-export const messageStreamRoute: Middleware = async (ctx, next) => {
-  if (ctx.url !== ROUTE.messageStream) {
-    return await next();
-  }
-
+export const messageStreamRoute: Middleware = async (ctx) => {
   const params = extraParams(ctx.request.body);
 
   if (!params) {

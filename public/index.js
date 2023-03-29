@@ -204,6 +204,10 @@ const ImageApp = {
         const res = await util.request.post('/draw-image', {
           description: imageTitle.value,
         });
+        if (res.code !== 0) {
+          throw res.data;
+        }
+
         imageURL.value = res.data;
       } catch (err) {
         imageTitle.value = err.toString();
@@ -233,7 +237,13 @@ const ImageApp = {
         :loading="loading"
       >
         <div style="text-align: center;">{{ imageTitle }}</div>
-        <v-img v-if="imageURL" :src="imageURL"/>
+        <v-img v-if="imageURL" :src="imageURL">
+          <template v-slot:placeholder>
+            <div class="d-flex align-center justify-center fill-height">
+              <v-progress-circular indeterminate />
+            </div>
+          </template>
+        </v-img>
       </v-card>
       <v-text-field label="your description" variant="outlined" :value="description" @input="setDiscription" @keyup.ctrl.enter="drawImage" placeholder="Use Ctrl + Enter to draw">
         <template v-slot:append>

@@ -3,12 +3,11 @@ import path from 'path';
 import Koa from 'koa';
 import serve from 'koa-static';
 import bodyParser from 'koa-bodyparser';
-import argv from '@/util/argv';
 import chatGPT from '@/core/chatgpt';
+import argv from '@/util/argv';
 import { Code, response } from '@/util/response';
 import { useAccessLogger } from '@/util/logger';
-import { messageRoute, messageStreamRoute } from '@/router/message';
-import { drawImageRoute } from '@/router/image';
+import router from '@/router';
 import secret from '@/secret.json';
 
 chatGPT.init({
@@ -27,10 +26,8 @@ app.use(bodyParser());
 // logger
 app.use(useAccessLogger());
 
-// path route
-app.use(messageRoute);
-app.use(messageStreamRoute);
-app.use(drawImageRoute);
+// router
+app.use(router.routes());
 
 // 404
 app.use(async (ctx) => {

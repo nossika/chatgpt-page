@@ -3,10 +3,6 @@ import { logger } from '@/util/logger';
 import { Code, response } from '@/util/response';
 import chatGPT from '@/core/chatgpt';
 
-const ROUTE = {
-  drawImage: '/draw-image',
-};
-
 interface ImageParams {
   description: string;
 }
@@ -21,11 +17,7 @@ const extraParams = (params: unknown): ImageParams | null => {
   return { description };
 }
 
-export const drawImageRoute: Middleware = async (ctx, next) => {
-  if (ctx.url !== ROUTE.drawImage) {
-    return await next();
-  }
-
+export const drawImageRoute: Middleware = async (ctx) => {
   const params = extraParams(ctx.request.body);
 
   if (!params) {
