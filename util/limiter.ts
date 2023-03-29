@@ -13,16 +13,19 @@ RateLimit.defaultOptions({
   },
 });
 
-export const minLimiter = RateLimit.middleware({
-  interval: {
-    min: 1,
-  },
-  max: config.ipAccessLimitPerMin,
-});
+export const getApiLimiter = (prefixKey: string) => {
+  return RateLimit.middleware({
+    interval: {
+      min: 1,
+    },
+    max: config.apiAccessLimitPerMin,
+    prefixKey,
+  });
+};
 
-export const dayLimiter = RateLimit.middleware({
+export const accessLimiter = RateLimit.middleware({
   interval: {
     day: 1,
   },
-  max: config.ipAccessLimitPerDay,
+  max: config.accessLimitPerDay,
 });

@@ -22,7 +22,7 @@ const util = {
       });
 
       if (response.status !== 200) {
-        throw new Error(response.statusText);
+        throw new Error(response.statusText || response.status);
       }
   
       return response.body.getReader();

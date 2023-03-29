@@ -6,7 +6,7 @@ import bodyParser from 'koa-bodyparser';
 import chatGPT from '@/core/chatgpt';
 import { Code, response } from '@/util/response';
 import { useAccessLogger } from '@/util/logger';
-import { minLimiter, dayLimiter } from '@/util/limiter';
+import { accessLimiter } from '@/util/limiter';
 import router from '@/router';
 import config from '@/config';
 import secret from '@/secret.json';
@@ -30,25 +30,25 @@ app.use(async (ctx, next) => {
   return await next();
 });
 
-// access limiter
-app.use(dayLimiter);
-app.use(minLimiter);
-
-// parse request body
-app.use(bodyParser());
+// access limiter (cannot use more than one limiter for app)
+app.use(accessLimiter);
 
 // logger
 app.use(useAccessLogger());
 
+// parse request body
+app.use(bodyParser());
+
 // router
 app.use(router.routes());
 
-// 404
+// fallback to 404
 app.use(async (ctx) => {
   ctx.status = 404;
   ctx.body = response('404', Code.clientError);
 });
 
+// start server
 app.listen(config.port, () => {
   console.log(`listen on port http://localhost:${config.port} with config: ${JSON.stringify(config)}`);
 });

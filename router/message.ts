@@ -44,7 +44,7 @@ export const messageRoute: Middleware = async (ctx) => {
   });
 
   if (error) {
-    const errStr = error.toString();
+    const errStr = `Request chat-gpt api failed: ${error.toString()}`;
     logger(`error: ${errStr}, params: ${JSON.stringify(params)}`, ctx, 'error');
 
     ctx.status = 500;
@@ -79,7 +79,7 @@ export const messageStreamRoute: Middleware = async (ctx) => {
   }) as Receiver;
 
   if (error) {
-    const errStr = error.toString();
+    const errStr = `Request chat-gpt api failed: ${error.toString()}`;
     logger(`error: ${errStr}, params: ${JSON.stringify(params)}`, ctx, 'error');
 
     ctx.status = 500;
