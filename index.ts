@@ -4,10 +4,11 @@ import Koa from 'koa';
 import serve from 'koa-static';
 import bodyParser from 'koa-bodyparser';
 import chatGPT from '@/core/chatgpt';
-import argv from '@/util/argv';
 import { Code, response } from '@/util/response';
 import { useAccessLogger } from '@/util/logger';
+import { minLimiter, dayLimiter } from '@/util/limiter';
 import router from '@/router';
+import config from '@/config';
 import secret from '@/secret.json';
 
 chatGPT.init({
@@ -19,6 +20,19 @@ const app = new Koa();
 
 // serve static files
 app.use(serve(path.resolve(__dirname, 'public')));
+
+// set real request ip
+app.use(async (ctx, next) => {
+  if (config.ipHeader) {
+    ctx.request.ip = ctx.request.header[config.ipHeader] as string || ctx.request.ip;
+  }
+  
+  return await next();
+});
+
+// access limiter
+app.use(dayLimiter);
+app.use(minLimiter);
 
 // parse request body
 app.use(bodyParser());
@@ -35,8 +49,6 @@ app.use(async (ctx) => {
   ctx.body = response('404', Code.clientError);
 });
 
-const port = argv.port || 8000;
-
-app.listen(port, () => {
-  console.log(`listen on port http://localhost:${port}, argv: ${JSON.stringify(argv)}`);
+app.listen(config.port, () => {
+  console.log(`listen on port http://localhost:${config.port} with config: ${JSON.stringify(config)}`);
 });

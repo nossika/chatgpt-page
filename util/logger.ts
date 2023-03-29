@@ -1,6 +1,7 @@
 import { Middleware, ParameterizedContext } from 'koa';
 import path from 'path';
 import log4js from 'log4js';
+import config from '@/config';
 
 log4js.configure({
   appenders: {
@@ -15,13 +16,13 @@ log4js.configure({
   },
   categories: {
     default: { appenders: ['file'], level: 'info' },
-  }
+  },
 });
   
 const originLogger = log4js.getLogger();
 
 export const logger = (message: string, ctx: ParameterizedContext, type: 'info' | 'error' = 'info') => {
-  const prefix = `${ctx.request.header['x-real-ip'] || ctx.request.ip} ${ctx.method} ${ctx.url} `;
+  const prefix = `${ctx.request.ip} ${ctx.method} ${ctx.url} `;
   const log = prefix + message;
 
   if (type === 'error') {
@@ -34,7 +35,16 @@ export const logger = (message: string, ctx: ParameterizedContext, type: 'info' 
 
 export const useAccessLogger = (): Middleware => {
   return async (ctx, next) => {
-    logger('➡️', ctx);
-    await next();
+    const time = Date.now();
+    let err;
+    await next().catch(nextErr => {
+      err = nextErr;
+    });
+
+    logger(`➡️ ${ctx.status} ${Date.now() - time}ms`, ctx);
+
+    if (err) {
+      throw err;
+    }
   };
 };

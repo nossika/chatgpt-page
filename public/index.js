@@ -20,6 +20,10 @@ const util = {
         },
         body: JSON.stringify(data),
       });
+
+      if (response.status !== 200) {
+        throw new Error(response.statusText);
+      }
   
       return response.body.getReader();
     },
@@ -110,7 +114,7 @@ const ChatApp = {
       const answer = conversations[conversations.length - 1];
 
       try {
-        const stream = await util.request.stream('/message-stream', {
+        const reader = await util.request.stream('/message-stream', {
           message: m,
           context,
         });
@@ -119,7 +123,7 @@ const ChatApp = {
         const uint8Arrays = [];
 
         while (true) {
-          const { value, done } = await stream.read();
+          const { value, done } = await reader.read();
           if (done) break;
           uint8Arrays.push(value);
 
@@ -205,7 +209,7 @@ const ImageApp = {
           description: imageTitle.value,
         });
         if (res.code !== 0) {
-          throw res.data;
+          throw new Error(res.data || JSON.stringify(res));
         }
 
         imageURL.value = res.data;
