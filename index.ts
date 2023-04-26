@@ -3,6 +3,8 @@ import path from 'path';
 import Koa from 'koa';
 import serve from 'koa-static';
 import bodyParser from 'koa-bodyparser';
+import etag from 'koa-etag';
+import conditional from 'koa-conditional-get';
 import chatGPT from '@/core/chatgpt';
 import { Code, response } from '@/util/response';
 import { useAccessLogger } from '@/util/logger';
@@ -19,6 +21,8 @@ chatGPT.init({
 const app = new Koa();
 
 // serve static files
+app.use(conditional());
+app.use(etag());
 app.use(serve(path.resolve(__dirname, 'public')));
 
 // set real request ip
