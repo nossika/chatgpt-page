@@ -1,7 +1,9 @@
 export enum Code {
-  success = 0,
-  clientError = 400,
-  serverError = 500,
+  Success = 0,
+  ClientError = 400,
+  Forbidden = 403,
+  NotFound = 404,
+  ServerError = 500,
 }
 
 export interface APIResponse<T = any> {
@@ -9,7 +11,7 @@ export interface APIResponse<T = any> {
   data: T | string;
 }
 
-export const response = <T,>(data: T, code: Code = Code.success): APIResponse<T> => {
+export const response = <T,>(data: T, code: Code = Code.Success): APIResponse<T> => {
   return {
     code,
     data,

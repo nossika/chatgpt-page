@@ -6,16 +6,16 @@ import bodyParser from 'koa-bodyparser';
 import etag from 'koa-etag';
 import conditional from 'koa-conditional-get';
 import chatGPT from '@/core/chatgpt';
-import { Code, response } from '@/util/response';
+import { Code } from '@/util/response';
 import { useAccessLogger } from '@/util/logger';
 import { accessLimiter } from '@/util/limiter';
+import { handleCtxErr } from '@/util/error';
 import router from '@/router';
 import config from '@/config';
 import secret from '@/secret.json';
 
 chatGPT.init({
   key: secret.key,
-  org: secret.org,
 });
 
 const app = new Koa();
@@ -40,6 +40,18 @@ app.use(accessLimiter);
 // logger
 app.use(useAccessLogger());
 
+// handle uncaught error
+app.use(async (ctx, next) => {
+  try {
+    await next();
+  } catch (err) {
+    handleCtxErr({
+      ctx,
+      err,
+    });
+  }
+});
+
 // parse request body
 app.use(bodyParser());
 
@@ -48,8 +60,11 @@ app.use(router.routes());
 
 // fallback to 404
 app.use(async (ctx) => {
-  ctx.status = 404;
-  ctx.body = response('404', Code.clientError);
+  handleCtxErr({
+    ctx,
+    err: new Error('404'),
+    code: Code.NotFound,
+  });
 });
 
 // start server

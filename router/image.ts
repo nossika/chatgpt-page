@@ -1,13 +1,14 @@
 import { Middleware } from 'koa';
 import { logger } from '@/util/logger';
 import { Code, response } from '@/util/response';
+import { handleCtxErr } from '@/util/error';
 import chatGPT from '@/core/chatgpt';
 
 interface ImageParams {
   description: string;
 }
 
-const extraParams = (params: unknown): ImageParams | null => {
+const extractParams = (params: unknown): ImageParams | null => {
   const { description }: Partial<ImageParams> = params;
 
   if (!description) {
@@ -18,30 +19,32 @@ const extraParams = (params: unknown): ImageParams | null => {
 }
 
 export const drawImageRoute: Middleware = async (ctx) => {
-  const params = extraParams(ctx.request.body);
+  const params = extractParams(ctx.request.body);
 
   if (!params) {
-    ctx.status = 403;
-    ctx.body = response('invalid params', Code.clientError);
+    handleCtxErr({
+      ctx,
+      err: new Error('invalid params'),
+      name: 'invalid params',
+      code: Code.Forbidden,
+    });
     return;
   }
 
   const { description } = params;
   logger(`description: ${description}`, ctx);
 
-  let error;
-  const url = await chatGPT.get().drawImage(description).catch(err => {
-    error = err;
-  });
+  const url = await chatGPT.get().drawImage(description)
+    .catch(err => {
+      handleCtxErr({
+        ctx,
+        err,
+        name: 'openai sdk',
+        code: Code.ServerError,
+      });
+    });
 
-  if (error) {
-    const errStr = `Request chat-gpt api failed: ${error.toString()}`;
-    logger(`error: ${errStr}, params: ${JSON.stringify(params)}`, ctx, 'error');
-
-    ctx.status = 500;
-    ctx.body = response(errStr, Code.serverError);
-    return;
-  }
+  if (!url) return;
 
   ctx.body = response(url);
 };

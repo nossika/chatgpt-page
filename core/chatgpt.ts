@@ -1,19 +1,17 @@
 import { ChatCompletionRequestMessage, ChatCompletionRequestMessageRoleEnum, Configuration, OpenAIApi } from 'openai';
 import request from '@/util/request';
 
+// @refer: https://platform.openai.com/docs/api-reference/models/list
 const model = 'gpt-3.5-turbo';
 
 class ChatGPT {
   private openai: OpenAIApi;
   constructor({
     key,
-    org,
   }: {
     key: string;
-    org: string;
   }) {
     const configuration = new Configuration({
-      organization: org,
       apiKey: key,
     });
     
@@ -76,14 +74,11 @@ let instance: ChatGPT | null = null;
 const chatGPT = {
   init: ({
     key,
-    org,
   }: {
     key: string,
-    org: string,
   }) => {
     instance = new ChatGPT({
       key,
-      org,
     });
   },
   get: () => {

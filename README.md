@@ -4,7 +4,7 @@
 
 ## 配置 openAI 密钥
 
-按官方文档注册好账号，并获取到专属的 apiKey 和 organization。
+按官方文档注册好账号，并获取到专属的 apiKey 。
 
 https://platform.openai.com/docs/api-reference/authentication
 
@@ -12,8 +12,7 @@ https://platform.openai.com/docs/api-reference/authentication
 
 ```json
 {
-  "key": "your apiKey",
-  "org": "your organization"
+  "key": "your apiKey"
 }
 ```
 
@@ -35,7 +34,7 @@ proxy-port: openAI 接口可能被墙，需要本地搭好代理服务，走代�
 例子：
 
 ```bash
-$ npm start -- --proxy-port 8888 --port 9999
+$ npm start -- --port 9999 --proxy-port 8888 
 ```
 
 浏览器打开 `localhost:port` 即可访问页面使用。
