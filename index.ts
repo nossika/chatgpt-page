@@ -12,10 +12,9 @@ import { accessLimiter } from '@/util/limiter';
 import { handleCtxErr } from '@/util/error';
 import router from '@/router';
 import config from '@/config';
-import secret from '@/secret.json';
 
 chatGPT.init({
-  key: secret.key,
+  key: config.key,
 });
 
 const app = new Koa();
@@ -36,6 +35,24 @@ app.use(async (ctx, next) => {
 
 // access limiter (cannot use more than one limiter for app)
 app.use(accessLimiter);
+
+// check permission
+app.use(async (ctx, next) => {
+  if (config.whiteList?.length) {
+    const key = ctx.request.header[config.idHeader] as string;
+    if (!config.whiteList.includes(key)) {
+      handleCtxErr({
+        ctx,
+        err: new Error('no permission'),
+        name: 'permission block',
+        code: Code.Forbidden,
+      });
+      return;
+    }
+  }
+
+  return await next();
+});
 
 // logger
 app.use(useAccessLogger());

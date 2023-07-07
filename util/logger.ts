@@ -22,7 +22,7 @@ log4js.configure({
 const originLogger = log4js.getLogger();
 
 export const logger = (message: string, ctx: ParameterizedContext, type: 'info' | 'error' = 'info') => {
-  const prefix = `${ctx.request.ip} ${ctx.method} ${ctx.url} `;
+  const prefix = `${ctx.request.ip} ${ctx.request.header[config.idHeader]} ${ctx.method} ${ctx.url} `;
   const log = prefix + message;
 
   if (type === 'error') {

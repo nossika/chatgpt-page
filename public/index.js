@@ -7,26 +7,44 @@ const util = {
         method: 'post',
         headers: {
           'Content-Type': 'application/json',
+          'X-Key': util.getURLParams('key'),
         },
         body: JSON.stringify(data),
       });
-      return response.json();
+
+      if (response.status !== 200) {
+        throw new Error(`${url}: ${response.status} ${JSON.stringify(await response.json())}`);
+      }
+
+      return response;
     },
     stream: async (url, data) => {
       const response = await window.fetch(url, {
         method: 'post',
         headers: {
           'Content-Type': 'application/json',
+          'X-Key': util.getURLParams('key'),
         },
         body: JSON.stringify(data),
       });
 
       if (response.status !== 200) {
-        throw new Error(response.statusText || response.status);
+        throw new Error(`${url}: ${response.status} ${JSON.stringify(await response.json())}`);
       }
   
       return response.body.getReader();
     },
+  },
+
+  getURLParams(key) {
+    const params = new URLSearchParams(location.search);
+    return params.get(key) || '';
+  },
+
+  setURLParams(key, val) {
+    const params = new URLSearchParams(location.search);
+    params.set(key, val);
+    history.pushState(null, '', `?${params.toString()}`);
   },
 
   parseStreamData: (uint8Array, lastRemainStr = '') => {
@@ -205,9 +223,12 @@ const ImageApp = {
       description.value = '';
 
       try {
-        const res = await util.request.post('/draw-image', {
+        const raw = await util.request.post('/draw-image', {
           description: imageTitle.value,
         });
+
+        const res = await raw.json();
+
         if (res.code !== 0) {
           throw new Error(res.data || JSON.stringify(res));
         }
@@ -268,12 +289,10 @@ const App = {
       image: 'image',
     };
 
-    const params = new URLSearchParams(location.search);
-    const tab = ref(params.get('tab') || TAB.chat);
+    const tab = ref(util.getURLParams('tab') || TAB.chat);
 
     watchEffect(() => {
-      params.set('tab', tab.value);
-      history.pushState(null, '', `?${params.toString()}`);
+      util.setURLParams('tab', tab.value);
     });
 
     return {
