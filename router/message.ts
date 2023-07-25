@@ -55,7 +55,7 @@ export const messageRoute: Middleware = async (ctx) => {
 
   if (!answer) return;
 
-  ctx.body = response(answer)
+  ctx.body = response(answer);
 };
 
 export const messageStreamRoute: Middleware = async (ctx) => {

@@ -39,7 +39,7 @@ app.use(accessLimiter);
 // check permission
 app.use(async (ctx, next) => {
   if (config.whiteList?.length) {
-    const key = ctx.request.header[config.idHeader] as string;
+    const key = (ctx.request.header[config.idHeader] || ctx.request.query[config.idHeader]) as string;
     if (!config.whiteList.includes(key)) {
       handleCtxErr({
         ctx,
