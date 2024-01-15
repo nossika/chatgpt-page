@@ -194,15 +194,15 @@ const ChatApp = {
         </v-chip>
         <pre style="padding: 10px; white-space: pre-wrap; border: 1px solid #eee; flex-grow: 1; flex-shrink: 1;">{{ c.content }}</pre>
       </v-card>
-      <div>
-        <v-textarea label="your message" variant="outlined" :value="message" @input="setMessage" @keyup.ctrl.enter="sendMessage" placeholder="Use Ctrl + Enter to send">
-          <template v-slot:append>
-            <v-btn @click="sendMessage" :loading="loading" :disabled="!message">
-              SEND
-            </v-btn>
-          </template>
-        </v-textarea>
-      </div>
+      <v-card class="pa-4">
+        <v-textarea label="your message" variant="outlined" :value="message" @input="setMessage" @keyup.ctrl.enter="sendMessage" placeholder="Use Ctrl + Enter to send" />
+        <v-btn
+          @click="sendMessage" :loading="loading" :disabled="!message"
+          class="mt-n2" color="teal-darken-1" prepend-icon="mdi-send"
+        >
+          SEND
+        </v-btn>
+      </v-card>
     </div>
   `,
 };
@@ -270,13 +270,15 @@ const ImageApp = {
           </template>
         </v-img>
       </v-card>
-      <v-text-field label="your description" variant="outlined" :value="description" @input="setDiscription" @keyup.ctrl.enter="drawImage" placeholder="Use Ctrl + Enter to draw">
-        <template v-slot:append>
-          <v-btn class="mt-n2" @click="drawImage" :loading="loading" :disabled="!description">
-            DRAW
-          </v-btn>
-        </template>
-      </v-text-field>
+      <v-card class="pa-4">
+        <v-text-field label="your description" variant="outlined" :value="description" @input="setDiscription" @keyup.ctrl.enter="drawImage" placeholder="Use Ctrl + Enter to draw" />
+        <v-btn
+          @click="drawImage" :loading="loading" :disabled="!description"
+          class="mt-n2" color="teal-darken-1" prepend-icon="mdi-draw"
+        >
+          DRAW
+        </v-btn>
+      </v-card>
     </div>
   `,
 };
