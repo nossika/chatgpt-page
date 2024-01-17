@@ -25,6 +25,8 @@ export const wechatMessageRoute: Middleware<DefaultState, DefaultContext, Wechat
     return;
   }
 
+  logger(`question ${question}`, ctx);
+
   const answer = await chatGPT.get()
     .sendMessage(question)
     .catch(err => {
