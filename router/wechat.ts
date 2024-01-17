@@ -2,7 +2,6 @@
 // @see https://developers.weixin.qq.com/doc/aispeech/platform/3rdparty_api.html
 
 import chatGPT from '@/core/chatgpt';
-import { logger } from '@/util/logger';
 import { DefaultContext, DefaultState, Middleware } from 'koa';
 
 interface WechatRes<T = {}> {
@@ -25,7 +24,7 @@ export const wechatMessageRoute: Middleware<DefaultState, DefaultContext, Wechat
     return;
   }
 
-  logger(`question ${question}`, ctx);
+  ctx.logger(`question ${question}`);
 
   const answer = await chatGPT.get()
     .sendMessage(question)
@@ -33,7 +32,7 @@ export const wechatMessageRoute: Middleware<DefaultState, DefaultContext, Wechat
       ctx.body = {
         err_code: 500,
       };
-      logger(`Error=[wechatMessageRoute] ${String(err)}, ExtraLog=${question}`, ctx, 'error');
+      ctx.logger(`Error=[wechatMessageRoute] ${String(err)}, ExtraLog=${question}`, 'error');
     });
 
   if (!answer) return;

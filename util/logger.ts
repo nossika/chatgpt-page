@@ -21,7 +21,9 @@ log4js.configure({
   
 const originLogger = log4js.getLogger();
 
-export const logger = (message: string, ctx: ParameterizedContext, type: 'info' | 'error' = 'info') => {
+export type LoggerType = 'info' | 'error';
+
+export const logger = (ctx: ParameterizedContext, message: string, type: LoggerType = 'info') => {
   const prefixes = [
     ctx.request.ip,
     ctx.request.header[config.idHeader] || '',
@@ -47,7 +49,7 @@ export const useAccessLogger = (): Middleware => {
       err = nextErr;
     });
 
-    logger(`➡️ ${ctx.status} ${Date.now() - time}ms`, ctx);
+    ctx.logger(`➡️ ${ctx.status} ${Date.now() - time}ms`);
 
     if (err) {
       throw err;

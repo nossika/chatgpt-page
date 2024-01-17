@@ -1,6 +1,5 @@
 import { ParameterizedContext } from 'koa';
 import { Code, response } from './response';
-import { logger } from './logger';
 
 export const handleCtxErr = ({
   ctx,
@@ -16,7 +15,7 @@ export const handleCtxErr = ({
   code?: Code;
 }) => {
   const errStr = `[${name}] ${String(err)}`;
-  logger(`Error=${errStr}, ExtraLog=${extraLog}`, ctx, 'error');
+  ctx.logger(`Error=${errStr}, ExtraLog=${extraLog}`, 'error');
 
   ctx.status = code;
   ctx.body = response(errStr, code);

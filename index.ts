@@ -7,7 +7,7 @@ import etag from 'koa-etag';
 import conditional from 'koa-conditional-get';
 import chatGPT from '@/core/chatgpt';
 import { Code } from '@/util/response';
-import { useAccessLogger } from '@/util/logger';
+import { LoggerType, logger, useAccessLogger } from '@/util/logger';
 import { accessLimiter } from '@/util/limiter';
 import { handleCtxErr } from '@/util/error';
 import router from '@/router';
@@ -17,7 +17,17 @@ chatGPT.init({
   key: config.key,
 });
 
-const app = new Koa();
+const app = new Koa<Koa.DefaultState, {
+  logger: (message: string, type: LoggerType) => void;
+} & Koa.DefaultContext>();
+
+app.use(async (ctx, next) => {
+  ctx.logger = (message: string, type: LoggerType) => {
+    logger(ctx, message, type)
+  };
+
+  await next();
+});
 
 // serve static files
 app.use(conditional());

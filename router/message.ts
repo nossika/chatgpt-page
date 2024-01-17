@@ -1,7 +1,6 @@
 import { ChatCompletionRequestMessageRoleEnum } from 'openai';
 import { Middleware } from 'koa';
 import { PassThrough } from 'stream';
-import { logger } from '@/util/logger';
 import { Code, response } from '@/util/response';
 import { handleCtxErr } from '@/util/error';
 import chatGPT from '@/core/chatgpt';
@@ -35,7 +34,7 @@ export const messageRoute: Middleware = async (ctx) => {
   }
 
   const { message, context } = params;
-  logger(`message: ${message}`, ctx);
+  ctx.logger(`message: ${message}`);
 
   const answer = await chatGPT.get().sendMessage(message, context.map(c => ({
     role: {
@@ -72,7 +71,7 @@ export const messageStreamRoute: Middleware = async (ctx) => {
   }
 
   const { message, context } = params;
-  logger(`message: ${message}`, ctx);
+  ctx.logger(`message: ${message}`);
 
   const receiver = await chatGPT.get().getMessageStream(message, context.map(c => ({
     role: {

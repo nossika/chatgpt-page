@@ -1,5 +1,4 @@
 import { Middleware } from 'koa';
-import { logger } from '@/util/logger';
 import { Code, response } from '@/util/response';
 import { handleCtxErr } from '@/util/error';
 import chatGPT from '@/core/chatgpt';
@@ -32,7 +31,7 @@ export const drawImageRoute: Middleware = async (ctx) => {
   }
 
   const { description } = params;
-  logger(`description: ${description}`, ctx);
+  ctx.logger(`description: ${description}`);
 
   const url = await chatGPT.get().drawImage(description)
     .catch(err => {
