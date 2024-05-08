@@ -4,22 +4,28 @@
 import chatGPT from '@/core/chatgpt';
 import { DefaultContext, DefaultState, Middleware } from 'koa';
 
-interface WechatRes<T = {}> {
-  err_code: number;
-  data_list?: T[];
+interface WechatRes {
+  answer_type: 'text';
+  text_info: {
+    short_answer: string;
+  };
 }
 
 interface WechatMessageReq {
   question?: string;
 }
 
-type WechatMessageRes = WechatRes<{ answer: string }>;
+export const wechatMessageRoute: Middleware<DefaultState, DefaultContext, WechatRes> = async (ctx) => {
+  ctx.logger(`wechatMessageRoute: ${JSON.stringify(ctx.request.body)} ${JSON.stringify(ctx.request.query)}`);
 
-export const wechatMessageRoute: Middleware<DefaultState, DefaultContext, WechatMessageRes> = async (ctx) => {
   const question = (ctx.request.body as WechatMessageReq)?.question;
+
   if (!question) {
     ctx.body = {
-      err_code: 400,
+      answer_type: 'text',
+      text_info: {
+        short_answer: '400',
+      },
     };
     return;
   }
@@ -30,7 +36,10 @@ export const wechatMessageRoute: Middleware<DefaultState, DefaultContext, Wechat
     .sendMessage(question)
     .catch(err => {
       ctx.body = {
-        err_code: 500,
+        answer_type: 'text',
+        text_info: {
+          short_answer: '500',
+        },
       };
       ctx.logger(`Error=[wechatMessageRoute] ${String(err)}, ExtraLog=${question}`, 'error');
     });
@@ -38,12 +47,9 @@ export const wechatMessageRoute: Middleware<DefaultState, DefaultContext, Wechat
   if (!answer) return;
 
   ctx.body = {
-    err_code: 0,
-    data_list: [
-      {
-        answer,
-      },
-    ],
+    answer_type: 'text',
+    text_info: {
+      short_answer: answer,
+    },
   };
 };
-
