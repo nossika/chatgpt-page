@@ -18,6 +18,7 @@ const config = {
   idHeader: 'x-key', // For Secret.whiteList validation
   key: secret.key,
   whiteList: secret.whiteList,
+  loggerBackupDays: 7,
 };
 
 export default config;

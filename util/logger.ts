@@ -11,7 +11,7 @@ log4js.configure({
       alwaysIncludePattern: true,
       encoding: 'utf-8',
       filename: path.resolve(__dirname, '..', 'logs', 'access'),
-      numBackups: 3,
+      numBackups: config.loggerBackupDays || 1,
     },
   },
   categories: {

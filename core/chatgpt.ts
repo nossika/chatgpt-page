@@ -55,6 +55,52 @@ class ChatGPT {
     return res.data as any as Receiver;
   }
 
+  async translate(text: string, lang: string, targetLangs: string[]) {
+    const systemPrompt = `You are an translation assistant that translates >>>source_text<<< from language >>>source_language<<< to languages >>>target_languages<<<, output should be a valid JSON, format should like >>>output_example<<<. Provide translations without any explanation`;
+    
+    interface TranslateResult {
+      [lang: string]: string;
+    }
+
+    const userPrompt = JSON.stringify({
+      source_language: lang,
+      target_languages: targetLangs,
+      source_text: text,
+      output_example: targetLangs.reduce((json, lang) => {
+        json[lang] = '';
+        return json;
+      }, {} as TranslateResult),
+    });
+
+    const messages = [
+      {
+        role: ChatCompletionRequestMessageRoleEnum.System,
+        content: systemPrompt,
+      },
+      {
+        role: ChatCompletionRequestMessageRoleEnum.User,
+        content: userPrompt,
+      }
+    ];
+
+    const res = await this.openai.createChatCompletion({
+      model,
+      temperature: 0.2,
+      messages,
+    });
+
+    const content = res.data.choices[0]?.message?.content;
+
+    let json = {} as TranslateResult;
+    try {
+      json = JSON.parse(content);
+    } catch (err) {
+      throw new Error(`Invalid JSON: ${content}`);
+    }
+
+    return json;
+  }
+
   async drawImage(description: string) {
     const res = await this.openai.createImage({
       prompt: description,
