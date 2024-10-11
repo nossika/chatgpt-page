@@ -369,11 +369,13 @@ const TranslateApp = {
       <v-card class="pa-4">
         <v-textarea label="original text" variant="outlined" v-model="inputText" @keyup.ctrl.enter="translate" placeholder="Use Ctrl + Enter to submit" />
         <v-select
+          variant="outlined"
           label="Original language"
           v-model="originalLang"
           :items="[{ title: 'Auto', value: '' }].concat(allLangs)"
         ></v-select>
         <v-select
+          variant="outlined"
           label="Target Languages"
           multiple
           v-model="targetLangs"
@@ -381,7 +383,7 @@ const TranslateApp = {
         ></v-select>
         <v-btn
           @click="translate" :loading="loading" :disabled="!inputText || !targetLangs.length"
-          class="mt-n2" color="teal-darken-1" prepend-icon="mdi-send"
+          class="mt-n2" color="teal-darken-1" prepend-icon="mdi-translate"
         >
           TRANSLATE
         </v-btn>
