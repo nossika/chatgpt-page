@@ -5,18 +5,18 @@ import chatGPT from '@/core/chatgpt';
 
 interface MessageParams {
   text: string;
-  lang?: string;
+  originalLang?: string;
   targetLangs?: string[];
 }
 
 const extractParams = (params: unknown): MessageParams | null => {
-  const { text, lang = 'zh', targetLangs = ['en'] }: Partial<MessageParams> = params;
+  const { text, originalLang = '', targetLangs = ['en'] }: Partial<MessageParams> = params;
 
-  if (!text || !lang || !Array.isArray(targetLangs)) {
+  if (!text || !Array.isArray(targetLangs)) {
     return null;
   }
 
-  return { text, lang, targetLangs };
+  return { text, originalLang, targetLangs };
 }
 
 export const translateRoute: Middleware = async (ctx) => {
@@ -32,10 +32,10 @@ export const translateRoute: Middleware = async (ctx) => {
     return;
   }
 
-  const { text, lang, targetLangs } = params;
-  ctx.logger(`text: ${text}, lang: ${lang}, targetLangs: ${targetLangs}`);
+  const { text, originalLang, targetLangs } = params;
+  ctx.logger(`text: ${text}, targetLangs: ${targetLangs}, originalLang: ${originalLang}`);
 
-  const answer = await chatGPT.get().translate(text, lang, targetLangs)
+  const answer = await chatGPT.get().translate(text, targetLangs, originalLang)
     .catch(err => {
       handleCtxErr({
         ctx,

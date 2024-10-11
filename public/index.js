@@ -1,3 +1,5 @@
+const { createApp, ref, reactive, watchEffect, computed } = Vue;
+
 const decoder = new TextDecoder();
 
 const util = {
@@ -100,8 +102,6 @@ const util = {
 
 const ChatApp = {
   setup() {
-    const { ref, reactive } = Vue;
-
     const loading = ref(false);
     const message = ref('');
     const conversations = reactive([]);
@@ -209,8 +209,6 @@ const ChatApp = {
 
 const ImageApp = {
   setup() {
-    const { ref } = Vue;
-
     const loading = ref(false);
     const description = ref('');
     const imageTitle = ref('');
@@ -283,12 +281,147 @@ const ImageApp = {
   `,
 };
 
+const TranslateApp = {
+  setup() {
+    const loading = ref(false);
+    const inputText = ref('');
+    const originalText = ref('');
+    const translateResp = ref(null);
+    const errorMessage = ref('');
+    const originalLang = ref('');
+    const targetLangs = ref(['zh']);
+
+    const allLangs = [
+      { title: '简体中文', value: 'zh' },
+      { title: '繁體中文', value: 'zh-hant' },
+      { title: 'English', value: 'en' },
+      { title: '日本語', value: 'ja' },
+      { title: 'Français', value: 'fr' },
+      { title: 'Deutsch', value: 'de' },
+      { title: 'Español', value: 'es' },
+      { title: 'اَلْعَرَبِيَّةُ', value: 'ar' },
+    ];
+
+    const getLangTitle = (value) => {
+      return allLangs.find(l => l.value === value)?.title || '';
+    };
+
+    const translate = async () => {
+      if (loading.value || !inputText.value) return;
+      errorMessage.value = '';
+      originalText.value = inputText.value;
+      inputText.value = '';
+
+      loading.value = true;
+      try {
+        const raw = await util.request.post('/translate', {
+          text: originalText.value,
+          targetLangs: targetLangs.value,
+          originalLang: originalLang.value,
+        });
+
+        const res = await raw.json();
+
+        if (res.code !== 0) {
+          throw new Error(res.data || JSON.stringify(res));
+        }
+
+        translateResp.value = res.data;
+      } catch (err) {
+        errorMessage.value = err.toString();
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    const translations = computed(() => {
+      const result = [];
+      if (originalText.value) {
+        result.push({
+          lang: 'Original' + (originalLang.value ? `(${getLangTitle(originalLang.value)})` : ''), 
+          text: originalText.value,
+        });
+      }
+
+      translateResp.value && Object.entries(translateResp.value).forEach(([key, value]) => {
+        result.push({ 
+          lang: getLangTitle(key), 
+          text: value,
+        });
+      });
+
+      return result;
+    });
+
+    return {
+      inputText,
+      translate,
+      errorMessage,
+      loading,
+      originalLang,
+      targetLangs,
+      translations,
+      allLangs,
+    };
+  },
+  template: `
+    <div>
+      <v-card class="pa-4">
+        <v-textarea label="original text" variant="outlined" v-model="inputText" @keyup.ctrl.enter="translate" placeholder="Use Ctrl + Enter to submit" />
+        <v-select
+          label="Original language"
+          v-model="originalLang"
+          :items="[{ title: 'Auto', value: '' }].concat(allLangs)"
+        ></v-select>
+        <v-select
+          label="Target Languages"
+          multiple
+          v-model="targetLangs"
+          :items="allLangs"
+        ></v-select>
+        <v-btn
+          @click="translate" :loading="loading" :disabled="!inputText || !targetLangs.length"
+          class="mt-n2" color="teal-darken-1" prepend-icon="mdi-send"
+        >
+          TRANSLATE
+        </v-btn>
+      </v-card>
+      <v-card v-if="translations.length || errorMessage" :loading="loading" class="pa-4 mt-4">
+        <v-alert v-if="errorMessage" color="error" class="mb-4">
+          {{ errorMessage }}
+        </v-alert>
+        <v-table v-if="translations.length">
+          <thead>
+            <tr>
+              <th class="text-left">
+                Language
+              </th>
+              <th class="text-left">
+                Text
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="item in translations"
+              :key="item.lang"
+            >
+              <td>{{ item.lang }}</td>
+              <td>{{ item.text }}</td>
+            </tr>
+          </tbody>
+        </v-table>
+      </v-card>
+    </div>
+  `,
+};
+
 const App = {
   setup() {
-    const { ref, watchEffect } = Vue;
     const TAB = {
       chat: 'chat',
       image: 'image',
+      translate: 'translate',
     };
 
     const tab = ref(util.getURLParams('tab') || TAB.chat);
@@ -310,23 +443,20 @@ const App = {
           color="cyan-lighten-4"
           density="compact"
         >
-          <v-btn :value="TAB.chat">
-            chat
-          </v-btn>
-          <v-btn :value="TAB.image">
-            image
+          <v-btn v-for="(val, key) in TAB" :value="val" :key="key">
+            {{ key }}
           </v-btn>
         </v-btn-toggle>
       </div>
       <div>
         <chat-app v-show="tab === TAB.chat"/>
         <image-app v-show="tab === TAB.image"/>
+        <translate-app v-show="tab === TAB.translate"/>
       </div>
     </v-container>
   `,
 };
 
-const { createApp } = Vue;
 const { createVuetify } = Vuetify;
 
 const vuetify = createVuetify();
@@ -334,5 +464,6 @@ const app = createApp(App);
 
 app.component('ChatApp', ChatApp);
 app.component('ImageApp', ImageApp);
+app.component('TranslateApp', TranslateApp);
 
 app.use(vuetify).mount('#app');
