@@ -195,7 +195,7 @@ const ChatApp = {
         <pre style="padding: 10px; white-space: pre-wrap; border: 1px solid #eee; flex-grow: 1; flex-shrink: 1;">{{ c.content }}</pre>
       </v-card>
       <v-card class="pa-4">
-        <v-textarea label="your message" variant="outlined" :value="message" @input="setMessage" @keyup.ctrl.enter="sendMessage" placeholder="Use Ctrl + Enter to send" />
+        <v-textarea label="Your Question" variant="outlined" :value="message" @input="setMessage" @keyup.ctrl.enter="sendMessage" placeholder="Use Ctrl + Enter to send" />
         <v-btn
           @click="sendMessage" :loading="loading" :disabled="!message"
           class="mt-n2" color="teal-darken-1" prepend-icon="mdi-send"
@@ -269,7 +269,7 @@ const ImageApp = {
         </v-img>
       </v-card>
       <v-card class="pa-4">
-        <v-text-field label="your description" variant="outlined" :value="description" @input="setDiscription" @keyup.ctrl.enter="drawImage" placeholder="Use Ctrl + Enter to draw" />
+        <v-text-field label="Your Description" variant="outlined" :value="description" @input="setDiscription" @keyup.ctrl.enter="drawImage" placeholder="Use Ctrl + Enter to draw" />
         <v-btn
           @click="drawImage" :loading="loading" :disabled="!description"
           class="mt-n2" color="teal-darken-1" prepend-icon="mdi-draw"
@@ -367,10 +367,10 @@ const TranslateApp = {
   template: `
     <div>
       <v-card class="pa-4">
-        <v-textarea label="original text" variant="outlined" v-model="inputText" @keyup.ctrl.enter="translate" placeholder="Use Ctrl + Enter to submit" />
+        <v-textarea label="Original Text" variant="outlined" v-model="inputText" @keyup.ctrl.enter="translate" placeholder="Use Ctrl + Enter to submit" />
         <v-select
           variant="outlined"
-          label="Original language"
+          label="Original Language"
           v-model="originalLang"
           :items="[{ title: 'Auto', value: '' }].concat(allLangs)"
         ></v-select>
