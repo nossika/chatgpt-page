@@ -2,7 +2,7 @@ import { ChatCompletionRequestMessage, ChatCompletionRequestMessageRoleEnum, Con
 import request from '@/util/request';
 
 // @refer: https://platform.openai.com/docs/api-reference/models/list
-const model = 'gpt-3.5-turbo';
+const model = 'gpt-4o-mini';
 
 class ChatGPT {
   private openai: OpenAIApi;
