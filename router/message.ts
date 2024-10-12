@@ -5,6 +5,8 @@ import { handleCtxErr } from '@/util/error';
 import chatGPT from '@/core/chatgpt';
 import type { ChatCompletionMessageParam } from 'openai/resources';
 
+const saltMessage = '<------------->';
+
 interface MessageParams {
   message: string;
   context: { type: 'Q' | 'A', content: string }[];
@@ -107,6 +109,7 @@ export const messageStreamRoute: Middleware = async (ctx) => {
   // @note: 另起线程处理流式数据，避免阻塞当下的接口返回
   (async () => {
     for await (const chunk of stream) {
+      passThrough.write(saltMessage);
       passThrough.write(chunk.choices[0]?.delta?.content || '');
     }
   })().finally(() => {

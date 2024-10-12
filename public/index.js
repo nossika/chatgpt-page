@@ -66,6 +66,8 @@ const ChatApp = {
       const answer = conversations[conversations.length - 1];
     
       try {
+        const saltMessage = '<------------->';
+
         const response = await util.request.post('/message-stream', {
           message: messageValue,
           context,
@@ -73,14 +75,18 @@ const ChatApp = {
   
         const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
+
+        let result = '';
   
         while (true) {
           const { value, done } = await reader.read();
-          answer.content += decoder.decode(value);
+          result += decoder.decode(value);
+          result = result.replaceAll(saltMessage, '');
+          answer.content = marked.parse(result);
           if (done) break;
         }
   
-        answer.content = marked.parse(answer.content);
+        answer.content = marked.parse(result);
       } catch (err) {
         answer.content = err.toString();
       }
