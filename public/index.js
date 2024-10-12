@@ -1,7 +1,5 @@
-// 从 CDN 引入的 window 全局变量
+// 显式展示代码依赖（从 CDN 脚本引入的 window 全局变量）
 var { Vue, Vuetify, marked } = window;
-
-const decoder = new TextDecoder();
 
 const util = {
   request: {
@@ -16,26 +14,10 @@ const util = {
       });
 
       if (response.status !== 200) {
-        throw new Error(`${url}: ${response.status} ${JSON.stringify(await response.json())}`);
+        throw new Error(`${url} ${response.status} ${JSON.stringify(await response.json())}`);
       }
 
       return response;
-    },
-    stream: async (url, data) => {
-      const response = await window.fetch(url, {
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Key': util.getURLParams('key'),
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (response.status !== 200) {
-        throw new Error(`${url}: ${response.status} ${JSON.stringify(await response.json())}`);
-      }
-  
-      return response.body.getReader();
     },
   },
 
@@ -48,56 +30,6 @@ const util = {
     const params = new URLSearchParams(location.search);
     params.set(key, val);
     history.pushState(null, '', `?${params.toString()}`);
-  },
-
-  parseStreamData: (uint8Array, lastRemainStr = '') => {
-    const originStr = decoder.decode(uint8Array);
-    let remainStr = '';
-  
-    // split originStr by line
-    const dataStrs = (lastRemainStr + originStr)
-      .split('\n')
-      .map(s => s.trim())
-      .filter(s => !!s);
-  
-    const jsons = [];
-  
-    for (let i = 0; i < dataStrs.length; i += 1) {
-      // each line starts with 'data: '
-      const JSONStr = dataStrs[i].replace('data: ', '');
-      let json;
-      try {
-        json = JSON.parse(JSONStr);
-        json && jsons.push(json);
-      } catch (err) {
-        if (i === dataStrs.length - 1) {
-          // if the last line cannot be parsed, it is usually because the line is incomplete, and it should be left over for the next parsing
-          remainStr = dataStrs[i];
-        }
-      }
-    };
-  
-    return {
-      jsons,
-      remainStr,
-    };
-  },
-
-  concatUint8Arrays: (uint8Arrays) => {
-    let length = 0;
-    for (const a of uint8Arrays) {
-      length += a.length;
-    }
-  
-    const arr = new Uint8Array(length);
-  
-    let offset = 0;
-    for (const a of uint8Arrays) {
-      arr.set(a, offset);
-      offset += a.length;
-    }
-  
-    return arr;
   },
 };
 
@@ -115,57 +47,40 @@ const ChatApp = {
     const sendMessage = async () => {
       if (loading.value || !message.value) return;
       loading.value = true;
-      const m = message.value;
+      const messageValue = message.value;
+      message.value = '';
+
       const context = conversations.slice();
 
       conversations.push({
         type: CONVERSATION_TYPE.Q,
-        content: m,
+        content: messageValue,
       });
-
-      message.value = '';
 
       conversations.push({
         type: CONVERSATION_TYPE.A,
         content: '',
       });
       
-      // get reactive obejct
+      // @note: get reactive answer after push
       const answer = conversations[conversations.length - 1];
-
+    
       try {
-        const reader = await util.request.stream('/message-stream', {
-          message: m,
+        const response = await util.request.post('/message-stream', {
+          message: messageValue,
           context,
         });
-
-        let lastRemainStr = '';
-        const uint8Arrays = [];
-
+  
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+  
         while (true) {
           const { value, done } = await reader.read();
+          answer.content += decoder.decode(value);
           if (done) break;
-          uint8Arrays.push(value);
-
-          const { jsons, remainStr } = util.parseStreamData(value, lastRemainStr);
-          lastRemainStr = remainStr;
-
-          jsons.forEach(data => {
-            const chunk = data.choices[0].delta.content || '';
-            answer.content += chunk;
-          });
         }
-
-        // to avoid parsing errors caused by inconsistent data, the complete data will be parsed again to ensure coherence
-        const uint8Array = util.concatUint8Arrays(uint8Arrays);
-        const { jsons } = util.parseStreamData(uint8Array);
-        let content = '';
-        jsons.forEach(data => {
-          const chunk = data.choices[0].delta.content || '';
-          content += chunk;
-        });
-        
-        answer.content = marked.parse(content);
+  
+        answer.content = marked.parse(answer.content);
       } catch (err) {
         answer.content = err.toString();
       }
@@ -267,7 +182,7 @@ const ImageApp = {
     <div>
       <v-card
         v-if="imageTitle"
-        class="pa-3 mb-5"
+        class="pa-4 mb-5"
         :loading="loading"
       >
         <div class="text-center">{{ imageTitle }}</div>

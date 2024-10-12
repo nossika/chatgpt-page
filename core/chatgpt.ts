@@ -1,58 +1,54 @@
-import { ChatCompletionRequestMessage, ChatCompletionRequestMessageRoleEnum, Configuration, OpenAIApi } from 'openai';
-import request from '@/util/request';
+import { OpenAI } from 'openai';
+import httpsAgent from '@/util/agent';
+import type { ChatCompletionMessageParam } from 'openai/resources';
 
 // @refer: https://platform.openai.com/docs/api-reference/models/list
 const model = 'gpt-4o-mini';
 
 class ChatGPT {
-  private openai: OpenAIApi;
+  private openai: OpenAI;
   constructor({
     key,
   }: {
     key: string;
   }) {
-    const configuration = new Configuration({
+    this.openai = new OpenAI({
       apiKey: key,
+      httpAgent: httpsAgent,
     });
-    
-    const openai = new OpenAIApi(configuration, undefined, request);
-
-    this.openai = openai;
   }
 
-  async sendMessage(message: string, context?: ChatCompletionRequestMessage[]) {
+  async sendMessage(message: string, context?: ChatCompletionMessageParam[]) {
     const messages = context?.slice() || [];
     messages.push({
-      role: ChatCompletionRequestMessageRoleEnum.User,
+      role: 'user',
       content: message,
     });
 
-    const res = await this.openai.createChatCompletion({
+    const res = await this.openai.chat.completions.create({
       model,
       messages,
     });
 
-    const content = res.data.choices[0]?.message?.content;
+    const content = res.choices[0]?.message?.content;
   
     return content;
   }
 
-  async getMessageStream(message: string, context?: ChatCompletionRequestMessage[]) {
+  async getMessageStream(message: string, context?: ChatCompletionMessageParam[]) {
     const messages = context?.slice() || [];
     messages.push({
-      role: ChatCompletionRequestMessageRoleEnum.User,
+      role: 'user',
       content: message,
     });
 
-    const res = await this.openai.createChatCompletion({
+    const stream = await this.openai.chat.completions.create({
       model,
       messages,
       stream: true,
-    }, {
-      responseType: 'stream',
     });
 
-    return res.data as any as Receiver;
+    return stream;
   }
 
   async translate(text: string, targetLangs: string[], originalLang?: string) {
@@ -72,24 +68,24 @@ class ChatGPT {
       }, {} as TranslateResult),
     });
 
-    const messages = [
+    const messages: ChatCompletionMessageParam[] = [
       {
-        role: ChatCompletionRequestMessageRoleEnum.System,
+        role: 'system',
         content: systemPrompt,
       },
       {
-        role: ChatCompletionRequestMessageRoleEnum.User,
+        role: 'user',
         content: userPrompt,
       }
     ];
 
-    const res = await this.openai.createChatCompletion({
+    const res = await this.openai.chat.completions.create({
       model,
       temperature: 0.2,
       messages,
     });
 
-    const content = res.data.choices[0]?.message?.content;
+    const content = res.choices[0]?.message?.content;
 
     let json = {} as TranslateResult;
     try {
@@ -102,17 +98,13 @@ class ChatGPT {
   }
 
   async drawImage(description: string) {
-    const res = await this.openai.createImage({
+    const res = await this.openai.images.generate({
       prompt: description,
       n: 1,
     });
 
-    return res.data.data[0]?.url || '';
+    return res.data[0]?.url || '';
   }
-}
-
-export interface Receiver {
-  on: (type: 'data' | 'end', handler: (data: Buffer) => void) => void;
 }
 
 let instance: ChatGPT | null = null;

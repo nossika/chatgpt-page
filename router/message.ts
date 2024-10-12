@@ -1,9 +1,9 @@
-import { ChatCompletionRequestMessageRoleEnum } from 'openai';
 import { Middleware } from 'koa';
 import { PassThrough } from 'stream';
 import { Code, response } from '@/util/response';
 import { handleCtxErr } from '@/util/error';
 import chatGPT from '@/core/chatgpt';
+import type { ChatCompletionMessageParam } from 'openai/resources';
 
 interface MessageParams {
   message: string;
@@ -19,6 +19,23 @@ const extractParams = (params: unknown): MessageParams | null => {
 
   return { message, context };
 }
+
+const contextConvert = (context: MessageParams['context']): ChatCompletionMessageParam[] => {
+  return context.map(c => {
+    switch (c.type) {
+      case 'Q':
+        return {
+          role: 'user',
+          content: c.content,
+        };
+      case 'A':
+        return {
+          role: 'assistant',
+          content: c.content,
+        };
+    }
+  });
+};
 
 export const messageRoute: Middleware = async (ctx) => {
   const params = extractParams(ctx.request.body);
@@ -36,13 +53,7 @@ export const messageRoute: Middleware = async (ctx) => {
   const { message, context } = params;
   ctx.logger(`message: ${message}`);
 
-  const answer = await chatGPT.get().sendMessage(message, context.map(c => ({
-    role: {
-      Q: ChatCompletionRequestMessageRoleEnum.User,
-      A: ChatCompletionRequestMessageRoleEnum.Assistant,
-    }[c.type],
-    content: c.content,
-  })))
+  const answer = await chatGPT.get().sendMessage(message, contextConvert(context))
     .catch(err => {
       handleCtxErr({
         ctx,
@@ -73,13 +84,7 @@ export const messageStreamRoute: Middleware = async (ctx) => {
   const { message, context } = params;
   ctx.logger(`message: ${message}`);
 
-  const receiver = await chatGPT.get().getMessageStream(message, context.map(c => ({
-    role: {
-      Q: ChatCompletionRequestMessageRoleEnum.User,
-      A: ChatCompletionRequestMessageRoleEnum.Assistant,
-    }[c.type],
-    content: c.content,
-  })))
+  const stream = await chatGPT.get().getMessageStream(message, contextConvert(context))
     .catch((err) => {
       handleCtxErr({
         ctx,
@@ -89,21 +94,22 @@ export const messageStreamRoute: Middleware = async (ctx) => {
       });
     });
 
-  if (!receiver) return;
+  if (!stream) return;
 
-  const stream = new PassThrough();
-
-  receiver.on('data', (data) => {
-    stream.write(data);
-  });
-
-  receiver.on('end', () => {
-    stream.end();
-  });
+  const passThrough = new PassThrough();
 
   ctx.set({
     'Content-Type': 'text/event-stream',
   });
 
-  ctx.body = stream;
+  ctx.body = passThrough;
+
+  // @note: 另起线程处理流式数据，避免阻塞当下的接口返回
+  (async () => {
+    for await (const chunk of stream) {
+      passThrough.write(chunk.choices[0]?.delta?.content || '');
+    }
+  })().finally(() => {
+    passThrough.end();
+  });
 };

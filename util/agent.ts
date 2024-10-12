@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import argv from '@/util/argv';
 
@@ -10,8 +9,4 @@ const httpsAgent =
   })
   : undefined;
 
-const request = axios.create({
-  httpsAgent,
-});
-
-export default request;
+export default httpsAgent;
