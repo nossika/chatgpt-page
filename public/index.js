@@ -1,4 +1,5 @@
-const { createApp, ref, reactive, watchEffect, computed } = Vue;
+// 从 CDN 引入的 window 全局变量
+var { Vue, Vuetify, marked } = window;
 
 const decoder = new TextDecoder();
 
@@ -102,6 +103,7 @@ const util = {
 
 const ChatApp = {
   setup() {
+    const { ref, reactive } = Vue;
     const loading = ref(false);
     const message = ref('');
     const conversations = reactive([]);
@@ -162,7 +164,8 @@ const ChatApp = {
           const chunk = data.choices[0].delta.content || '';
           content += chunk;
         });
-        answer.content = content;
+        
+        answer.content = marked.parse(content);
       } catch (err) {
         answer.content = err.toString();
       }
@@ -180,20 +183,37 @@ const ChatApp = {
   },
   template: `
     <div>
-      <v-card v-for="(c, i) in conversations" style="margin-bottom: 20px; padding: 10px; display: flex;" :loading="loading && i === conversations.length - 1">
-        <v-chip style="flex-grow: 0; flex-shrink: 0; margin-right: 10px; margin-top: 6px;"
+      <v-card 
+        v-for="(c, i) in conversations"
+        class="pa-4 mb-6 d-flex"
+        :loading="loading && i === conversations.length - 1"
+      >
+        <v-chip 
+          class="mr-4 mt-3 flex-grow-0 flex-shrink-0"
           label
-          :color="{[CONVERSATION_TYPE.Q]: 'primary', [CONVERSATION_TYPE.A]: 'cyan'}[c.type]"
+          :color="{[CONVERSATION_TYPE.Q]: 'primary', [CONVERSATION_TYPE.A]: 'purple'}[c.type]"
         >
           {{ c.type }}
         </v-chip>
-        <pre style="padding: 10px; white-space: pre-wrap; border: 1px solid #eee; flex-grow: 1; flex-shrink: 1;">{{ c.content }}</pre>
+        <div
+          class="px-6 py-4 flex-grow-1 flex-shrink-1 border"
+          v-html="c.content"
+        >
       </v-card>
       <v-card class="pa-4">
-        <v-textarea label="Your Question" variant="outlined" v-model="message" @keyup.ctrl.enter="sendMessage" placeholder="Use Ctrl + Enter to send" />
+        <v-textarea 
+          label="Your Question"
+          variant="outlined"
+          v-model="message"
+          @keyup.ctrl.enter="sendMessage"
+          placeholder="Use Ctrl + Enter to send"
+        />
         <v-btn
-          @click="sendMessage" :loading="loading" :disabled="!message"
-          class="mt-n2" color="teal-darken-1" prepend-icon="mdi-send"
+          @click="sendMessage"
+          :loading="loading"
+          :disabled="!message"
+          class="mt-n2" color="teal-darken-1"
+          prepend-icon="mdi-send"
         >
           SEND
         </v-btn>
@@ -204,6 +224,7 @@ const ChatApp = {
 
 const ImageApp = {
   setup() {
+    const { ref } = Vue;
     const loading = ref(false);
     const description = ref('');
     const imageTitle = ref('');
@@ -246,10 +267,10 @@ const ImageApp = {
     <div>
       <v-card
         v-if="imageTitle"
-        style="padding: 10px; margin-bottom: 20px;"
+        class="pa-3 mb-5"
         :loading="loading"
       >
-        <div style="text-align: center;">{{ imageTitle }}</div>
+        <div class="text-center">{{ imageTitle }}</div>
         <v-img v-if="imageURL" :src="imageURL">
           <template v-slot:placeholder>
             <div class="d-flex align-center justify-center fill-height">
@@ -273,6 +294,7 @@ const ImageApp = {
 
 const TranslateApp = {
   setup() {
+    const { ref, computed } = Vue;
     const loading = ref(false);
     const inputText = ref('');
     const originalText = ref('');
@@ -414,6 +436,7 @@ const TranslateApp = {
 
 const App = {
   setup() {
+    const { ref, watchEffect } = Vue;
     const tabs = [
       {
         key: 'chat',
@@ -445,7 +468,7 @@ const App = {
   },
   template: `
     <v-container>
-      <div style="margin-bottom: 20px; display: flex; justify-content: center;">
+      <div class="mb-5 d-flex justify-center">
         <v-btn-toggle
           v-model="tab"
           color="cyan-lighten-4"
@@ -464,11 +487,11 @@ const App = {
     </v-container>
   `,
 };
-
+const { createApp } = Vue;
 const { createVuetify } = Vuetify;
 
-const vuetify = createVuetify();
 const app = createApp(App);
+const vuetify = createVuetify();
 
 app.component('ChatApp', ChatApp);
 app.component('TranslateApp', TranslateApp);
