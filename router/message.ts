@@ -5,7 +5,7 @@ import { handleCtxErr } from '@/util/error';
 import chatGPT from '@/core/chatgpt';
 import type { ChatCompletionMessageParam } from 'openai/resources';
 
-const saltMessage = '<------------->';
+const saltMessage = '>.........................................................<';
 
 interface MessageParams {
   message: string;
