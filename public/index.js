@@ -66,7 +66,7 @@ const ChatApp = {
       const answer = conversations[conversations.length - 1];
     
       try {
-        const saltMessage = '<------------->';
+        const saltMessage = '>.........................................................<';
 
         const response = await util.request.post('/message-stream', {
           message: messageValue,
