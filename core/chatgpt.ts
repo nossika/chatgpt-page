@@ -56,7 +56,7 @@ class ChatGPT {
   }
 
   async translate(text: string, targetLangs: string[], originalLang?: string) {
-    const systemPrompt = `You are an translation assistant that translates >>>source_text<<< ${originalLang ? 'from language >>>source_language<<<' : ''} to languages >>>target_languages<<<, output should be a valid JSON, format should like >>>output_example<<<. Provide translations without any explanation`;
+    const systemPrompt = `You are an translation assistant that translates >>>source_text<<< ${originalLang ? 'from language >>>source_language<<<' : ''} to languages >>>target_languages<<<, output should be a valid JSON, and JSON format should like >>>output_example<<<. Please provide result by JSON without any explanation`;
     
     interface TranslateResult {
       [lang: string]: string;
