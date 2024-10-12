@@ -66,7 +66,8 @@ const ChatApp = {
       const answer = conversations[conversations.length - 1];
     
       try {
-        const saltMessage = '>.........................................................<';
+        // 和服务端约定的 saltMessage，展示前需要替换掉
+        const saltMessage = '>                                                       <';
 
         const response = await util.request.post('/message-stream', {
           message: messageValue,
