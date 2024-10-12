@@ -170,13 +170,8 @@ const ChatApp = {
       loading.value = false;
     };
 
-    const setMessage = (event) => {
-      message.value = event.target.value;
-    };
-
     return {
       message,
-      setMessage,
       loading,
       sendMessage,
       conversations,
@@ -195,7 +190,7 @@ const ChatApp = {
         <pre style="padding: 10px; white-space: pre-wrap; border: 1px solid #eee; flex-grow: 1; flex-shrink: 1;">{{ c.content }}</pre>
       </v-card>
       <v-card class="pa-4">
-        <v-textarea label="Your Question" variant="outlined" :value="message" @input="setMessage" @keyup.ctrl.enter="sendMessage" placeholder="Use Ctrl + Enter to send" />
+        <v-textarea label="Your Question" variant="outlined" v-model="message" @keyup.ctrl.enter="sendMessage" placeholder="Use Ctrl + Enter to send" />
         <v-btn
           @click="sendMessage" :loading="loading" :disabled="!message"
           class="mt-n2" color="teal-darken-1" prepend-icon="mdi-send"
@@ -239,16 +234,11 @@ const ImageApp = {
       loading.value = false;
     };
 
-    const setDiscription = (event) => {
-      description.value = event.target.value;
-    };
-
     return {
       loading,
       description,
       imageTitle,
       imageURL,
-      setDiscription,
       drawImage,
     };
   },
@@ -269,7 +259,7 @@ const ImageApp = {
         </v-img>
       </v-card>
       <v-card class="pa-4">
-        <v-text-field label="Your Description" variant="outlined" :value="description" @input="setDiscription" @keyup.ctrl.enter="drawImage" placeholder="Use Ctrl + Enter to draw" />
+        <v-text-field label="Your Description" variant="outlined" v-model="description" @keyup.ctrl.enter="drawImage" placeholder="Use Ctrl + Enter to draw" />
         <v-btn
           @click="drawImage" :loading="loading" :disabled="!description"
           class="mt-n2" color="teal-darken-1" prepend-icon="mdi-draw"
@@ -296,9 +286,13 @@ const TranslateApp = {
       { title: '繁體中文', value: 'zh-hant' },
       { title: 'English', value: 'en' },
       { title: '日本語', value: 'ja' },
+      { title: '한국어', value: 'ko' },
       { title: 'Français', value: 'fr' },
       { title: 'Deutsch', value: 'de' },
       { title: 'Español', value: 'es' },
+      { title: 'Русский язык', value: 'ru' },
+      { title: 'हिन्दी', value: 'hi' },
+      { title: 'ภาษาไทย', value: 'th' },
       { title: 'اَلْعَرَبِيَّةُ', value: 'ar' },
     ];
 
@@ -420,20 +414,32 @@ const TranslateApp = {
 
 const App = {
   setup() {
-    const TAB = {
-      chat: 'chat',
-      image: 'image',
-      translate: 'translate',
-    };
+    const tabs = [
+      {
+        key: 'chat',
+        name: 'chat',
+        component: 'ChatApp',
+      },
+      {
+        key: 'translate',
+        name: 'translate',
+        component: 'TranslateApp',
+      },
+      util.getURLParams('enable-image') && {
+        key: 'image',
+        name: 'image',
+        component: 'ImageApp',
+      },
+    ].filter(Boolean);
 
-    const tab = ref(util.getURLParams('tab') || TAB.chat);
+    const tab = ref(util.getURLParams('tab') || 'chat');
 
     watchEffect(() => {
       util.setURLParams('tab', tab.value);
     });
 
     return {
-      TAB,
+      tabs,
       tab,
     };
   },
@@ -445,15 +451,15 @@ const App = {
           color="cyan-lighten-4"
           density="compact"
         >
-          <v-btn v-for="(val, key) in TAB" :value="val" :key="key">
-            {{ key }}
+          <v-btn v-for="t in tabs" :value="t.key" :key="t.key">
+            {{ t.name }}
           </v-btn>
         </v-btn-toggle>
       </div>
       <div>
-        <chat-app v-show="tab === TAB.chat"/>
-        <image-app v-show="tab === TAB.image"/>
-        <translate-app v-show="tab === TAB.translate"/>
+        <template v-for="t in tabs">
+          <component :is="t.component" v-if="tab === t.key"/>
+        </template>
       </div>
     </v-container>
   `,
@@ -465,7 +471,7 @@ const vuetify = createVuetify();
 const app = createApp(App);
 
 app.component('ChatApp', ChatApp);
-app.component('ImageApp', ImageApp);
 app.component('TranslateApp', TranslateApp);
+app.component('ImageApp', ImageApp);
 
 app.use(vuetify).mount('#app');
