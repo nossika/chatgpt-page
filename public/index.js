@@ -105,20 +105,32 @@ const ChatApp = {
         const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
 
-        let rawText = '';
-  
+        let tempText = '';
+        const rawDataList = [];
+        
+        // 流式输出临时数据
         while (true) {
           const { value, done } = await reader.read();
           if (done) break;
-          rawText += decoder.decode(value);
+          rawDataList.push(value);
+          tempText += decoder.decode(value);
           // 原始数据中有 salt，使用前需要先替换
-          rawText = rawText.replaceAll(messageSalt.value, '');
-          const mdText = marked.parse(rawText);
+          tempText = tempText.replaceAll(messageSalt.value, '');
+          const mdText = marked.parse(tempText);
           if (!mdText) continue;
           reactiveAnswer.content = mdText;
         }
+
+        // 完整处理数据（上一步逐个对原始 Uint8Array 解析并输出，可能会在边界处出现错误字符，最终全量解析 Uint8Array 可修复此情况）
+        const rawData = new Uint8Array(rawDataList.reduce((len, data) => len + data.length, 0));
+        let offset = 0;
+        rawDataList.forEach(data => {
+          rawData.set(data, offset);
+          offset += data.length;
+        });
   
-        reactiveAnswer.content = marked.parse(rawText);
+        const finalText = decoder.decode(rawData).replaceAll(messageSalt.value, '');
+        reactiveAnswer.content = marked.parse(finalText);
       } catch (err) {
         reactiveAnswer.content = err.toString();
       }
