@@ -12,8 +12,8 @@ const secret: Secret = JSON.parse(s);
 const config = {
   port: argv.port || 8000,
   proxyPort: argv['proxy-port'],
-  apiAccessLimitPerMin: 5,
-  accessLimitPerDay: 100,
+  apiAccessLimitPerMin: 10,
+  accessLimitPerDay: 200,
   ipHeader: 'x-real-ip', // Get ip from the request header, because the request many be proxied.
   idHeader: 'x-key', // For Secret.whiteList validation
   key: secret.key,
