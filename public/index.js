@@ -19,6 +19,25 @@ const util = {
 
       return response;
     },
+    get: async (url, params) => {
+      const paramsString = new URLSearchParams(params).toString();
+
+      const response = await window.fetch(
+        paramsString ? `${url}?${paramsString}` : url, 
+        {
+          method: 'get',
+          headers: {
+            'X-Key': util.getURLParams('key'),
+          },
+        }
+      );
+
+      if (response.status !== 200) {
+        throw new Error(`${url} ${response.status} ${JSON.stringify(await response.json())}`);
+      }
+
+      return response;
+    },
   },
 
   getURLParams(key) {
@@ -35,68 +54,80 @@ const util = {
 
 const ChatApp = {
   setup() {
-    const { ref, reactive } = Vue;
+    const { ref, reactive, onMounted } = Vue;
     const loading = ref(false);
-    const message = ref('');
+    const input = ref('');
+    const messageSalt = ref('');
     const conversations = reactive([]);
     const CONVERSATION_TYPE = {
       Q: 'Q',
       A: 'A',
     };
 
-    const sendMessage = async () => {
-      if (loading.value || !message.value) return;
+    onMounted(async () => {
       loading.value = true;
-      const messageValue = message.value;
-      message.value = '';
+      const res = await util.request.get('/message-stream-salt')
+        .then(res => res.json())
+        .finally(() => {
+          loading.value = false;
+        });
+
+      messageSalt.value = res.data;
+    });
+    
+    const sendMessage = async () => {
+      if (loading.value || !input.value) return;
+      loading.value = true;
+      const question = input.value;
+      input.value = '';
 
       const context = conversations.slice();
 
       conversations.push({
         type: CONVERSATION_TYPE.Q,
-        content: messageValue,
+        content: question,
       });
 
       conversations.push({
         type: CONVERSATION_TYPE.A,
-        content: '',
+        content: '...',
       });
       
-      // @note: get reactive answer after push
-      const answer = conversations[conversations.length - 1];
+      // 先 push 到 conversations，再从中获取响应式的对象，使得后续对其修改能响应到 UI 上
+      const reactiveAnswer = conversations[conversations.length - 1];
     
       try {
-        // 和服务端约定的 saltMessage，展示前需要替换掉
-        const saltMessage = '>                                                       <';
-
         const response = await util.request.post('/message-stream', {
-          message: messageValue,
+          message: question,
           context,
         });
   
         const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
 
-        let result = '';
+        let rawText = '';
   
         while (true) {
           const { value, done } = await reader.read();
-          result += decoder.decode(value);
-          result = result.replaceAll(saltMessage, '');
-          answer.content = marked.parse(result);
           if (done) break;
+          rawText += decoder.decode(value);
+          // 原始数据中有 salt，使用前需要先替换
+          rawText = rawText.replaceAll(messageSalt.value, '');
+          const mdText = marked.parse(rawText);
+          if (!mdText) continue;
+          reactiveAnswer.content = mdText;
         }
   
-        answer.content = marked.parse(result);
+        reactiveAnswer.content = marked.parse(rawText);
       } catch (err) {
-        answer.content = err.toString();
+        reactiveAnswer.content = err.toString();
       }
 
       loading.value = false;
     };
 
     return {
-      message,
+      input,
       loading,
       sendMessage,
       conversations,
@@ -126,14 +157,14 @@ const ChatApp = {
         <v-textarea 
           label="Your Question"
           variant="outlined"
-          v-model="message"
+          v-model="input"
           @keyup.ctrl.enter="sendMessage"
           placeholder="Use Ctrl + Enter to send"
         />
         <v-btn
           @click="sendMessage"
           :loading="loading"
-          :disabled="!message"
+          :disabled="!input"
           class="mt-n2" color="teal-darken-1"
           prepend-icon="mdi-send"
         >

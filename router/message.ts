@@ -68,6 +68,12 @@ export const messageRoute: Middleware = async (ctx) => {
   ctx.body = response(answer);
 };
 
+/**
+ * 客户端使用数据前需要替换掉 saltMessage
+ * 使用"... + 空格"使得客户端断句在任何区间，都有良好的展示体验，省去额外的 UI 处理逻辑
+ */
+const saltMessage = '...                                                       ';
+
 export const messageStreamRoute: Middleware = async (ctx) => {
   const params = extractParams(ctx.request.body);
 
@@ -106,15 +112,16 @@ export const messageStreamRoute: Middleware = async (ctx) => {
 
   // @note: 另起线程处理流式数据，避免阻塞当下的接口返回
   (async () => {
-    // 为了在强制提早返回数据，人为增加数据长度，否则数据量少的情况下流式数据不起作用，会一直等待有足够数据才发送
-    // 客户端需要替换掉 saltMessage 再展示
-    const saltMessage = '>                                                       <';
-
     for await (const chunk of stream) {
-      passThrough.write(saltMessage);
       passThrough.write(chunk.choices[0]?.delta?.content || '');
+      // @note: 人为增加数据长度来强制提早返回数据，否则数据量少且网络波动的情况下，网络层会一直等待凑够足够数据才发送，导致失去流式传输的体验
+      passThrough.write(saltMessage);
     }
   })().finally(() => {
     passThrough.end();
   });
+};
+
+export const messageStreamSaltRoute: Middleware = async (ctx) => {
+  ctx.body = response(saltMessage);
 };
