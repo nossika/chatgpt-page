@@ -112,8 +112,8 @@ export const messageStreamRoute: Middleware = async (ctx) => {
 
   // @note: 另起线程处理流式数据，避免阻塞当下的接口返回
   (async () => {
-    for await (const chunk of stream) {
-      passThrough.write(chunk.choices[0]?.delta?.content || '');
+    for await (const message of stream) {
+      passThrough.write(message);
       // @note: 人为增加数据长度来强制提早返回数据，否则数据量少且网络波动的情况下，网络层会一直等待凑够足够数据才发送，导致失去流式传输的体验
       passThrough.write(saltMessage);
     }

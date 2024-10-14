@@ -48,7 +48,19 @@ class ChatGPT {
       stream: true,
     });
 
-    return stream;
+    async function* iterator() {
+      for await (const chunk of stream) {
+        yield chunk.choices[0]?.delta?.content || '';
+      }
+    }
+
+    const proxyStream = {
+      [Symbol.asyncIterator]() {
+        return iterator();
+      },
+    };
+
+    return proxyStream;
   }
 
   async translate(text: string, targetLangs: string[], originalLang?: string) {
