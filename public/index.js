@@ -291,7 +291,6 @@ const TranslateApp = {
       if (loading.value || !inputText.value) return;
       errorMessage.value = '';
       originalText.value = inputText.value;
-      inputText.value = '';
 
       loading.value = true;
       try {
@@ -354,14 +353,14 @@ const TranslateApp = {
           label="Original Language"
           v-model="originalLang"
           :items="[{ title: 'Auto', value: '' }].concat(allLangs)"
-        ></v-select>
+        />
         <v-select
           variant="outlined"
           label="Target Languages"
           multiple
           v-model="targetLangs"
           :items="allLangs"
-        ></v-select>
+        />
         <v-btn
           @click="translate" :loading="loading" :disabled="!inputText || !targetLangs.length"
           class="mt-n2" color="teal-darken-1" prepend-icon="mdi-translate"
@@ -438,6 +437,7 @@ const App = {
           v-model="tab"
           color="cyan-lighten-4"
           density="compact"
+          mandatory="force"
         >
           <v-btn v-for="t in tabs" :value="t.key" :key="t.key">
             {{ t.name }}
@@ -452,6 +452,7 @@ const App = {
     </v-container>
   `,
 };
+
 const { createApp } = Vue;
 const { createVuetify } = Vuetify;
 
