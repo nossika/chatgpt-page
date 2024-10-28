@@ -1,6 +1,6 @@
 import { OpenAI } from 'openai';
 import httpsAgent from '@/util/agent';
-import type { ChatCompletionMessageParam } from 'openai/resources';
+import type { ChatCompletionMessageParam, ChatCompletionUserMessageParam } from 'openai/resources';
 
 // @refer: https://platform.openai.com/docs/api-reference/models/list
 const model = 'gpt-4o-mini';
@@ -18,11 +18,11 @@ class ChatGPT {
     });
   }
 
-  async sendMessage(message: string, context?: ChatCompletionMessageParam[]) {
+  async sendMessage(content: ChatCompletionUserMessageParam['content'], context?: ChatCompletionMessageParam[]) {
     const messages = context?.slice() || [];
     messages.push({
       role: 'user',
-      content: message,
+      content: content,
     });
 
     const res = await this.openai.chat.completions.create({
@@ -30,16 +30,16 @@ class ChatGPT {
       messages,
     });
 
-    const content = res.choices[0]?.message?.content;
+    const answer = res.choices[0]?.message?.content;
   
-    return content;
+    return answer;
   }
 
-  async getMessageStream(message: string, context?: ChatCompletionMessageParam[]) {
+  async getMessageStream(content: ChatCompletionUserMessageParam['content'], context?: ChatCompletionMessageParam[]) {
     const messages = context?.slice() || [];
     messages.push({
       role: 'user',
-      content: message,
+      content: content,
     });
 
     const stream = await this.openai.chat.completions.create({

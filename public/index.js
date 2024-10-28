@@ -56,7 +56,8 @@ const ChatApp = {
   setup() {
     const { ref, reactive, onMounted } = Vue;
     const loading = ref(false);
-    const input = ref('');
+    const question = ref('');
+    const questionImage = ref('');
     const messageSalt = ref('');
     const conversations = reactive([]);
     const CONVERSATION_TYPE = {
@@ -76,21 +77,26 @@ const ChatApp = {
     });
     
     const sendMessage = async () => {
-      if (loading.value || !input.value) return;
+      if (loading.value || !question.value) return;
+
       loading.value = true;
-      const question = input.value;
-      input.value = '';
+      const q = question.value;
+      const qImg = questionImage.value;
+      question.value = '';
+      questionImage.value = '';
 
       const context = conversations.slice();
 
       conversations.push({
         type: CONVERSATION_TYPE.Q,
-        content: question,
+        message: q,
+        imgURL: qImg,
       });
 
       conversations.push({
         type: CONVERSATION_TYPE.A,
-        content: '...',
+        message: '',
+        displayMessage: '...',
       });
       
       // 先 push 到 conversations，再从中获取响应式的对象，使得后续对其修改能响应到 UI 上
@@ -98,7 +104,8 @@ const ChatApp = {
     
       try {
         const response = await util.request.post('/message-stream', {
-          message: question,
+          message: q,
+          imgURL: qImg,
           context,
         });
   
@@ -108,7 +115,7 @@ const ChatApp = {
         let tempText = '';
         const rawDataList = [];
         
-        // 流式输出临时数据
+        // 流式数据处理，持续输出临时数据到界面
         while (true) {
           const { value, done } = await reader.read();
           if (done) break;
@@ -118,7 +125,7 @@ const ChatApp = {
           tempText = tempText.replaceAll(messageSalt.value, '');
           const mdText = marked.parse(tempText);
           if (!mdText) continue;
-          reactiveAnswer.content = mdText;
+          reactiveAnswer.message = mdText;
         }
 
         // 完整处理数据（上一步逐个对原始 Uint8Array 解析并输出，可能会在边界处出现错误字符，最终全量解析 Uint8Array 可修复此情况）
@@ -130,16 +137,18 @@ const ChatApp = {
         });
   
         const finalText = decoder.decode(rawData).replaceAll(messageSalt.value, '');
-        reactiveAnswer.content = marked.parse(finalText);
+        reactiveAnswer.message = finalText;
+        reactiveAnswer.displayMessage = marked.parse(finalText);
       } catch (err) {
-        reactiveAnswer.content = err.toString();
+        reactiveAnswer.displayMessage = err.toString();
       }
 
       loading.value = false;
     };
 
     return {
-      input,
+      question,
+      questionImage,
       loading,
       sendMessage,
       conversations,
@@ -162,22 +171,55 @@ const ChatApp = {
         </v-chip>
         <div
           class="px-6 py-4 flex-grow-1 flex-shrink-1 border"
-          v-html="c.content"
         >
+          <div v-html="c.displayMessage || c.message"/>
+          <v-img
+            class="mt-4"
+            v-if="c.imgURL"
+            :src="c.imgURL"
+            :max-height="240"
+            :min-height="60"
+          >
+            <template v-slot:error>
+              <div class="d-flex align-center justify-center fill-height">
+                <v-icon icon="mdi-image-off"/>
+              </div>
+            </template>
+          </v-img>
+        </div>
       </v-card>
       <v-card class="pa-4">
         <v-textarea 
           label="Your Question"
           variant="outlined"
-          v-model="input"
+          v-model="question"
           @keyup.ctrl.enter="sendMessage"
           placeholder="Use Ctrl + Enter to send"
         />
+        <v-text-field 
+          label="Question Image URL"
+          variant="outlined"
+          v-model="questionImage"
+          placeholder="https://xxx.com/some-pic.jpeg"
+        />
+        <v-img
+          class="mb-4"
+          v-if="questionImage"
+          :src="questionImage"
+          :max-height="240"
+          :min-height="60"
+        >
+          <template v-slot:error>
+            <div class="d-flex align-center justify-center fill-height">
+              <v-icon icon="mdi-image-off"/>
+            </div>
+          </template>
+        </v-img>
         <v-btn
           @click="sendMessage"
           :loading="loading"
-          :disabled="!input"
-          class="mt-n2" color="teal-darken-1"
+          :disabled="!question"
+          color="teal-darken-1"
           prepend-icon="mdi-send"
         >
           SEND
@@ -248,7 +290,7 @@ const ImageApp = {
         <v-text-field label="Your Description" variant="outlined" v-model="description" @keyup.ctrl.enter="drawImage" placeholder="Use Ctrl + Enter to draw" />
         <v-btn
           @click="drawImage" :loading="loading" :disabled="!description"
-          class="mt-n2" color="teal-darken-1" prepend-icon="mdi-draw"
+          color="teal-darken-1" prepend-icon="mdi-draw"
         >
           DRAW
         </v-btn>
@@ -363,7 +405,7 @@ const TranslateApp = {
         />
         <v-btn
           @click="translate" :loading="loading" :disabled="!inputText || !targetLangs.length"
-          class="mt-n2" color="teal-darken-1" prepend-icon="mdi-translate"
+          color="teal-darken-1" prepend-icon="mdi-translate"
         >
           TRANSLATE
         </v-btn>

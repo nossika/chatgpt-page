@@ -3,36 +3,66 @@ import { PassThrough } from 'stream';
 import { Code, response } from '@/util/response';
 import { handleCtxErr } from '@/util/error';
 import chatGPT from '@/core/chatgpt';
-import type { ChatCompletionMessageParam } from 'openai/resources';
+import type { ChatCompletionAssistantMessageParam, ChatCompletionUserMessageParam } from 'openai/resources';
 
 interface MessageParams {
   message: string;
-  context: { type: 'Q' | 'A', content: string }[];
+  imgURL?: string;
+  context: { 
+    type: 'Q' | 'A';
+    message: string;
+    imgURL?: string;
+  }[];
 }
 
 const extractParams = (params: unknown): MessageParams | null => {
-  const { message, context }: Partial<MessageParams> = params;
+  const { message, imgURL, context }: Partial<MessageParams> = params;
 
-  if (!message || !Array.isArray(context) || context.some(c => !c.content || !['Q', 'A'].includes(c.type))) {
+  if (!message || !Array.isArray(context) || context.some(c => !c.message || !['Q', 'A'].includes(c.type))) {
     return null;
   }
 
-  return { message, context };
-}
+  return { message, imgURL, context };
+};
 
-const contextConvert = (context: MessageParams['context']): ChatCompletionMessageParam[] => {
+const message2Content = (message: string, imgURL?: string): ChatCompletionUserMessageParam['content'] => {
+  if (!imgURL) {
+    return message;
+  }
+
+  return (
+    [
+      {
+        type: 'image_url',
+        image_url: {
+          url: imgURL,
+        },
+      },
+      {
+        type: 'text',
+        text: message,
+      },
+    ]
+  );
+};
+
+const context2Params = (context: MessageParams['context']) => {
   return context.map(c => {
     switch (c.type) {
-      case 'Q':
-        return {
+      case 'Q': {
+        const data: ChatCompletionUserMessageParam = {
           role: 'user',
-          content: c.content,
+          content: message2Content(c.message, c.imgURL),
         };
-      case 'A':
-        return {
+        return data;
+      }
+      case 'A': {
+        const data: ChatCompletionAssistantMessageParam = {
           role: 'assistant',
-          content: c.content,
+          content: c.message,
         };
+        return data;
+      }
     }
   });
 };
@@ -50,10 +80,11 @@ export const messageRoute: Middleware = async (ctx) => {
     return;
   }
 
-  const { message, context } = params;
+  const { message, imgURL, context } = params;
   ctx.logger(`message: ${message}`);
 
-  const answer = await chatGPT.get().sendMessage(message, contextConvert(context))
+  const answer = await chatGPT.get()
+    .sendMessage(message2Content(message, imgURL), context2Params(context))
     .catch(err => {
       handleCtxErr({
         ctx,
@@ -87,10 +118,11 @@ export const messageStreamRoute: Middleware = async (ctx) => {
     return;
   }
 
-  const { message, context } = params;
+  const { message, imgURL, context } = params;
   ctx.logger(`message: ${message}`);
 
-  const stream = await chatGPT.get().getMessageStream(message, contextConvert(context))
+  const stream = await chatGPT.get()
+    .getMessageStream(message2Content(message, imgURL), context2Params(context))
     .catch((err) => {
       handleCtxErr({
         ctx,
