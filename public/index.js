@@ -180,6 +180,13 @@ const ChatApp = {
       if (!file) {
         return;
       }
+
+      const maxMb = 5;
+      if (file.size > maxMb * 1024 * 1024) {
+        questionImageError.value = `Image size must be less than ${maxMb} mb`;
+        return;
+      }
+
       uploading.value = true;
       try {
         const response = await util.request.post('/file/upload', {
