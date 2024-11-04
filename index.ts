@@ -1,8 +1,8 @@
 
-import path from 'path';
+import path from 'node:path';
 import Koa from 'koa';
 import serve from 'koa-static';
-import bodyParser from 'koa-bodyparser';
+import koaBody from 'koa-body';
 import etag from 'koa-etag';
 import conditional from 'koa-conditional-get';
 import chatGPT from '@/core/chatgpt';
@@ -80,7 +80,12 @@ app.use(async (ctx, next) => {
 });
 
 // parse request body
-app.use(bodyParser());
+app.use(koaBody({
+  multipart: true,
+  formidable: {
+    maxFileSize: config.fileSizeLimit,
+  },
+}));
 
 // router
 app.use(router.routes());

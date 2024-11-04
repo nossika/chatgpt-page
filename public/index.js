@@ -1,16 +1,36 @@
 // 显式展示代码依赖（从 CDN 脚本引入的 window 全局变量）
-var { Vue, Vuetify, marked } = window;
+var { 
+  Vue, // https://cdn.jsdelivr.net/npm/vue@3.5.12/dist/vue.global.prod.js
+  Vuetify, // https://cdn.jsdelivr.net/npm/vuetify@3.7.2/dist/vuetify.min.js
+  marked, // https://cdn.jsdelivr.net/npm/marked/marked.min.js
+} = window;
 
 const util = {
   request: {
-    post: async (url, data) => {
+    post: async (url, data, type = 'json') => {
+      let body;
+      let additionHeaders = {};
+
+      if (type === 'formdata') {
+        const formData = new FormData();
+        Object.entries(data).forEach(([key, value]) => {
+          formData.append(key, value);
+        });
+        body = formData;
+      } else {
+        additionHeaders = {
+          'Content-Type': 'application/json',
+        };
+        body = JSON.stringify(data);
+      }
+
       const response = await window.fetch(url, {
         method: 'post',
         headers: {
-          'Content-Type': 'application/json',
           'X-Key': util.getURLParams('key'),
+          ...additionHeaders,
         },
-        body: JSON.stringify(data),
+        body,
       });
 
       if (response.status !== 200) {
@@ -56,8 +76,11 @@ const ChatApp = {
   setup() {
     const { ref, reactive, onMounted } = Vue;
     const loading = ref(false);
+    const uploading = ref(false);
     const question = ref('');
+    const questionError = ref('');
     const questionImage = ref('');
+    const questionImageError = ref('');
     const messageSalt = ref('');
     const conversations = reactive([]);
     const CONVERSATION_TYPE = {
@@ -101,6 +124,8 @@ const ChatApp = {
       
       // 先 push 到 conversations，再从中获取响应式的对象，使得后续对其修改能响应到 UI 上
       const reactiveAnswer = conversations[conversations.length - 1];
+
+      questionError.value = '';
     
       try {
         const response = await util.request.post('/message-stream', {
@@ -140,19 +165,47 @@ const ChatApp = {
         reactiveAnswer.message = finalText;
         reactiveAnswer.displayMessage = marked.parse(finalText);
       } catch (err) {
-        reactiveAnswer.displayMessage = err.toString();
+        questionError.value = String(err);
       }
 
       loading.value = false;
     };
 
+    const uploadImage = async (file) => {
+      questionImage.value = '';
+      questionImageError.value = '';
+      if (!file) {
+        return;
+      }
+      uploading.value = true;
+      try {
+        const response = await util.request.post('/file/upload', {
+          file,
+        }, 'formdata')
+          .then(res => res.json())
+          .finally(() => {
+            uploading.value = false;
+          });
+  
+        const url = `${window.origin}${response.data}`;
+  
+        questionImage.value = url;
+      } catch (err) {
+        questionImageError.value = String(err);
+      }
+    };
+
     return {
       question,
+      questionError,
       questionImage,
+      questionImageError,
       loading,
       sendMessage,
       conversations,
       CONVERSATION_TYPE,
+      uploadImage,
+      uploading,
     };
   },
   template: `
@@ -191,16 +244,20 @@ const ChatApp = {
       <v-card class="pa-4">
         <v-textarea 
           label="Your Question"
-          variant="outlined"
           v-model="question"
           @keyup.ctrl.enter="sendMessage"
+          :error-messages="questionError"
           placeholder="Use Ctrl + Enter to send"
-        />
-        <v-text-field 
-          label="Question Image URL"
           variant="outlined"
-          v-model="questionImage"
-          placeholder="https://xxx.com/some-pic.jpeg"
+        />
+        <v-file-input
+          label="Attached Image"
+          @update:modelValue="uploadImage"
+          :loading="uploading"
+          accept="image/*"
+          :error-messages="questionImageError"
+          variant="outlined"
+          show-size
         />
         <v-img
           class="mb-4"

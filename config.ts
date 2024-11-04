@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import path from 'node:path';
 import argv from '@/util/argv';
 
 interface Secret {
@@ -19,6 +20,8 @@ const config = {
   key: secret.key,
   whiteList: secret.whiteList,
   loggerBackupDays: 7,
+  fileSizeLimit: 5 * 1024 * 1024,
+  tmpFilePath: path.resolve(__dirname, 'public', 'tmp'),
 };
 
 export default config;
