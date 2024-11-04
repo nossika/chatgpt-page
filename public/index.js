@@ -80,6 +80,7 @@ const ChatApp = {
     const question = ref('');
     const questionError = ref('');
     const questionImage = ref('');
+    const questionImageFile = ref(null);
     const questionImageError = ref('');
     const messageSalt = ref('');
     const conversations = reactive([]);
@@ -107,6 +108,8 @@ const ChatApp = {
       const qImg = questionImage.value;
       question.value = '';
       questionImage.value = '';
+      questionImageFile.value = null;
+      questionImageError.value = '';
 
       const context = conversations.slice();
 
@@ -199,6 +202,7 @@ const ChatApp = {
       question,
       questionError,
       questionImage,
+      questionImageFile,
       questionImageError,
       loading,
       sendMessage,
@@ -252,6 +256,7 @@ const ChatApp = {
         />
         <v-file-input
           label="Attached Image"
+          v-model="questionImageFile"
           @update:modelValue="uploadImage"
           :loading="uploading"
           accept="image/*"
