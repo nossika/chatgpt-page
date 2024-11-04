@@ -20,8 +20,9 @@ const config = {
   key: secret.key,
   whiteList: secret.whiteList,
   loggerBackupDays: 7,
-  fileSizeLimit: 5 * 1024 * 1024,
+  fileSizeLimit: 5 * 1024 * 1024, // 5 MB
   tmpFilePath: path.resolve(__dirname, 'public', 'tmp'),
+  tmpFileExpiredMs: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
 export default config;

@@ -5,6 +5,7 @@ import serve from 'koa-static';
 import koaBody from 'koa-body';
 import etag from 'koa-etag';
 import conditional from 'koa-conditional-get';
+
 import chatGPT from '@/core/chatgpt';
 import { Code } from '@/util/response';
 import { LoggerType, logger, useAccessLogger } from '@/util/logger';
@@ -12,6 +13,7 @@ import { accessLimiter } from '@/util/limiter';
 import { handleCtxErr } from '@/util/error';
 import router from '@/router';
 import config from '@/config';
+import { startSchedule } from './core/schedule';
 
 chatGPT.init({
   key: config.key,
@@ -33,6 +35,9 @@ app.use(async (ctx, next) => {
 app.use(conditional());
 app.use(etag());
 app.use(serve(path.resolve(__dirname, 'public')));
+
+// start schedule job
+startSchedule();
 
 // set real request ip
 app.use(async (ctx, next) => {
