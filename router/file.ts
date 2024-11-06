@@ -7,11 +7,10 @@ import { handleCtxErr } from '@/util/error';
 import config from '@/config';
 
 export const fileUploadRoute: Middleware = async (ctx) => {
-  let file = ctx.request.files?.file;
-
-  if (file instanceof Array) {
-    file = file[0];
-  }
+  const rawFile = ctx.request.files?.file;
+  const file = Array.isArray(rawFile)
+    ? rawFile[0]
+    : rawFile;
 
   if (!file) {
     handleCtxErr({

@@ -23,13 +23,17 @@ const originLogger = log4js.getLogger();
 
 export type LoggerType = 'info' | 'error';
 
-export const logger = (ctx: ParameterizedContext, message: string, type: LoggerType = 'info') => {
-  const prefixes = [
-    ctx.request.ip,
-    ctx.request.header[config.idHeader] || '',
-    ctx.method,
-    ctx.url,
-  ];
+export const logger = (ctx: ParameterizedContext | string, message: string, type: LoggerType = 'info') => {
+  const prefixes = typeof ctx === 'string' 
+    ? [
+      `[${ctx}]`,
+    ]
+    : [
+      ctx.request.header[config.idHeader] || '',
+      ctx.request.ip,
+      ctx.method,
+      ctx.url,
+    ].filter(Boolean);
 
   const log = prefixes.concat(message).join(' ');
 

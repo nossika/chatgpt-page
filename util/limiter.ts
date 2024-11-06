@@ -12,12 +12,12 @@ RateLimit.defaultOptions({
   },
 });
 
-export const getApiLimiter = (prefixKey: string) => {
+export const getApiLimiter = (prefixKey: string, limitPerMin = config.apiAccessLimitPerMin) => {
   return RateLimit.middleware({
     interval: {
       min: 1,
     },
-    max: config.apiAccessLimitPerMin,
+    max: limitPerMin,
     prefixKey,
   });
 };

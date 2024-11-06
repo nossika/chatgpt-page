@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { logger } from './logger';
 
 export const cleanExpiredFiles = (folder: string, expiredMs: number) => {
   const filenames = fs.readdirSync(folder);
@@ -10,9 +11,6 @@ export const cleanExpiredFiles = (folder: string, expiredMs: number) => {
     const expired = (Date.now() - stats.birthtimeMs) > expiredMs;
     if (!expired) return;
     fs.rmSync(filepath);
-    console.log(`removed file: ${filepath}`);
+    logger('cleanExpiredFiles', filepath);
   });
 };
-
-
-

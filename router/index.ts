@@ -19,12 +19,12 @@ enum Route {
   FileUpload = '/file/upload',
 }
 
+router.get(Route.MessageStreamSalt, messageStreamSaltRoute);
 router.post(Route.Message, getApiLimiter(Route.Message), messageRoute);
 router.post(Route.MessageStream, getApiLimiter(Route.MessageStream), messageStreamRoute);
-router.get(Route.MessageStreamSalt, getApiLimiter(Route.MessageStream), messageStreamSaltRoute);
-router.post(Route.DrawImage, getApiLimiter(Route.DrawImage), drawImageRoute);
+router.post(Route.DrawImage, getApiLimiter(Route.DrawImage, 3), drawImageRoute);
 router.post(Route.WechatMessage, getApiLimiter(Route.WechatMessage), wechatMessageRoute as Middleware);
 router.post(Route.Translate, getApiLimiter(Route.Translate), translateRoute);
-router.post(Route.FileUpload, getApiLimiter(Route.FileUpload), fileUploadRoute);
+router.post(Route.FileUpload, getApiLimiter(Route.FileUpload, 5), fileUploadRoute);
 
 export default router;
