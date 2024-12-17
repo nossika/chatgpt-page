@@ -377,7 +377,7 @@ const TranslateApp = {
     const translateResp = ref(null);
     const errorMessage = ref('');
     const originalLang = ref('');
-    const targetLangs = ref(['zh']);
+    const targetLangs = ref(['zh', 'en']);
 
     const allLangs = [
       { title: '简体中文', value: 'zh' },
