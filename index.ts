@@ -16,7 +16,9 @@ import config from '@/config';
 import { startSchedule } from './core/schedule';
 
 chatGPT.init({
-  key: config.key,
+  langModel: config.langModel,
+  apiKey: config.apiKey,
+  apiBaseURL: config.apiBaseURL,
 });
 
 const app = new Koa<Koa.DefaultState, {

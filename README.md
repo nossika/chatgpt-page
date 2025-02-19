@@ -1,20 +1,26 @@
 # ChatGPT page
 
-包含对接 ChatGPT 接口的 NodeJS 服务，以及基于 Vue 的前端交互页面。
+包含对接 ChatGPT/DeepSeek 接口的 NodeJS 服务，以及基于 Vue 的前端交互页面。
 
-## 配置 openAI 密钥
+## 配置模型 API
 
-按官方文档注册好账号，并获取到专属的 apiKey 。
-
-https://platform.openai.com/docs/api-reference/authentication
-
-新建 secret.json 文件到项目根目录，文件内容:
+项目根目录新建 ./secret.json 文件，文件内容:
 
 ```json
 {
-  "key": "your apiKey"
+  "apiKey": "sk-xxxxxx", // 注册时获取的 api key
+  "whiteList": ["key1", "key2"] // （可选）白名单用户，若开启，C 端页面 url 必须带上 ?key=key1 参数才允许调用接口
 }
 ```
+
+### openai
+
+https://platform.openai.com/docs/api-reference/authentication
+
+### deepseek
+
+https://platform.deepseek.com/api_keys
+
 
 ## 启动服务
 
@@ -29,7 +35,7 @@ $ npm start
 
 port: 服务端口
 
-proxy-port: openAI 接口可能被墙，需要本地搭好代理服务，走代理端口请求 openAI
+proxy-port: API 可能被墙，需要本地搭好代理服务，走代理端口请求服务
 
 例子：
 

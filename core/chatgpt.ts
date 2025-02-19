@@ -2,20 +2,24 @@ import { OpenAI } from 'openai';
 import httpsAgent from '@/util/agent';
 import type { ChatCompletionMessageParam, ChatCompletionUserMessageParam } from 'openai/resources';
 
-// @refer: https://platform.openai.com/docs/api-reference/models/list
-const model = 'gpt-4o-mini';
-
 class ChatGPT {
   private openai: OpenAI;
+  private langModel: string;
   constructor({
-    key,
+    langModel,
+    apiKey,
+    apiBaseURL,
   }: {
-    key: string;
+    langModel: string;
+    apiKey: string;
+    apiBaseURL?: string;
   }) {
     this.openai = new OpenAI({
-      apiKey: key,
+      apiKey,
+      baseURL: apiBaseURL,
       httpAgent: httpsAgent,
     });
+    this.langModel = langModel;
   }
 
   async sendMessage(content: ChatCompletionUserMessageParam['content'], context?: ChatCompletionMessageParam[]) {
@@ -26,7 +30,7 @@ class ChatGPT {
     });
 
     const res = await this.openai.chat.completions.create({
-      model,
+      model: this.langModel,
       messages,
     });
 
@@ -43,7 +47,7 @@ class ChatGPT {
     });
 
     const stream = await this.openai.chat.completions.create({
-      model,
+      model: this.langModel,
       messages,
       stream: true,
     });
@@ -92,7 +96,7 @@ class ChatGPT {
     ];
 
     const res = await this.openai.chat.completions.create({
-      model,
+      model: this.langModel,
       temperature: 0.2,
       messages,
     });
@@ -123,12 +127,18 @@ let instance: ChatGPT | null = null;
 
 const chatGPT = {
   init: ({
-    key,
+    langModel,
+    apiKey,
+    apiBaseURL,
   }: {
-    key: string,
+    langModel: string;
+    apiKey: string;
+    apiBaseURL?: string;
   }) => {
     instance = new ChatGPT({
-      key,
+      langModel,
+      apiKey,
+      apiBaseURL,
     });
   },
   get: () => {
