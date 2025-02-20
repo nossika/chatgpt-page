@@ -150,7 +150,9 @@ const ChatApp = {
           rawDataList.push(value);
           tempText += decoder.decode(value);
           // 原始数据中有 salt，使用前需要先替换
-          tempText = tempText.replaceAll(messageSalt.value, '');
+          if (messageSalt.value) {
+            tempText = tempText.replaceAll(messageSalt.value, '');
+          }
           const mdText = marked.parse(tempText);
           if (!mdText) continue;
           reactiveAnswer.message = mdText;

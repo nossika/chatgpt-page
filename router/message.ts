@@ -103,7 +103,9 @@ export const messageRoute: Middleware = async (ctx) => {
  * 客户端使用数据前需要替换掉 saltMessage
  * 使用"... + 空格"使得客户端断句在任何区间，都有良好的展示体验，省去额外的 UI 处理逻辑
  */
-const saltMessage = '...                                 ';
+// const saltMessage = '...                                 ';
+
+const saltMessage = '';
 
 export const messageStreamRoute: Middleware = async (ctx) => {
   const params = extractParams(ctx.request.body);
