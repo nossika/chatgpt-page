@@ -108,5 +108,7 @@ app.use(async (ctx) => {
 
 // start server
 app.listen(config.port, () => {
-  console.log(`listen on port http://localhost:${config.port} with config: ${JSON.stringify(config)}`);
+  console.log(
+    `listen on: http://localhost:${config.port} \nconfig: ${JSON.stringify(config)}`
+  );
 });
