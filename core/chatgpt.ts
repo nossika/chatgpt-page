@@ -74,21 +74,16 @@ class ChatGPT {
   }
 
   async translate(text: string, targetLangs: string[], originalLang?: string) {
-    const systemPrompt = `You are an translation assistant that translates >>>source_text<<< ${originalLang ? 'from language >>>source_language<<<' : ''}to languages >>>target_languages<<<, output should be a valid JSON, and JSON format should like >>>output_example<<<. Please provide result by JSON without any explanation.`;
-    
     interface TranslateResult {
       [lang: string]: string;
     }
 
-    const userPrompt = JSON.stringify({
-      source_language: originalLang,
-      target_languages: targetLangs,
-      source_text: text,
-      output_example: targetLangs.reduce((json, lang) => {
-        json[lang] = '';
-        return json;
-      }, {} as TranslateResult),
-    });
+    const outputExample = targetLangs.reduce((json, lang) => {
+      json[lang] = '';
+      return json;
+    }, {} as TranslateResult);
+
+    const systemPrompt = `You are an translation assistant that translates >>>source_text<<< ${originalLang ? `from language ${originalLang}` : ''}to languages: ${targetLangs.join(', ')}, the final output should be a valid JSON. Please provide output by JSON without any explanation, and output format should like ${JSON.stringify(outputExample)}.`;
 
     const messages: ChatCompletionMessageParam[] = [
       {
@@ -97,8 +92,10 @@ class ChatGPT {
       },
       {
         role: 'user',
-        content: userPrompt,
-      }
+        content: JSON.stringify({
+          source_text: text,
+        }),
+      },
     ];
 
     const res = await this.openai.chat.completions.create({
