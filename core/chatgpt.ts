@@ -32,6 +32,9 @@ class ChatGPT {
     const res = await this.openai.chat.completions.create({
       model: this.langModel,
       messages,
+      response_format: {
+        type: 'text',
+      },
     });
 
     const answer = res.choices[0]?.message?.content;
@@ -49,6 +52,9 @@ class ChatGPT {
     const stream = await this.openai.chat.completions.create({
       model: this.langModel,
       messages,
+      response_format: {
+        type: 'text',
+      },
       stream: true,
     });
 
@@ -68,7 +74,7 @@ class ChatGPT {
   }
 
   async translate(text: string, targetLangs: string[], originalLang?: string) {
-    const systemPrompt = `You are an translation assistant that translates >>>source_text<<< ${originalLang ? 'from language >>>source_language<<<' : ''}to languages >>>target_languages<<<, output should be a valid JSON, and JSON format should like >>>output_example<<<. Please provide result by JSON without any explanation, and output must be plain text format, not markdown format.`;
+    const systemPrompt = `You are an translation assistant that translates >>>source_text<<< ${originalLang ? 'from language >>>source_language<<<' : ''}to languages >>>target_languages<<<, output should be a valid JSON, and JSON format should like >>>output_example<<<. Please provide result by JSON without any explanation.`;
     
     interface TranslateResult {
       [lang: string]: string;
@@ -99,6 +105,9 @@ class ChatGPT {
       model: this.langModel,
       temperature: 0.2,
       messages,
+      response_format:{
+        type: 'json_object',
+      },
     });
 
     const content = res.choices[0]?.message?.content;

@@ -122,14 +122,14 @@ const ChatApp = {
       conversations.push({
         type: CONVERSATION_TYPE.A,
         message: '',
-        displayMessage: '...',
       });
       
       // 先 push 到 conversations，再从中获取响应式的对象，使得后续对其修改能响应到 UI 上
       const reactiveAnswer = conversations[conversations.length - 1];
 
       questionError.value = '';
-    
+      reactiveAnswer.message = '...';
+
       try {
         const response = await util.request.post('/message-stream', {
           message: q,
@@ -145,6 +145,7 @@ const ChatApp = {
         
         // 流式数据处理，持续输出临时数据到界面
         while (true) {
+
           const { value, done } = await reader.read();
           if (done) break;
           rawDataList.push(value);
@@ -154,8 +155,7 @@ const ChatApp = {
             tempText = tempText.replaceAll(messageSalt.value, '');
           }
           const mdText = marked.parse(tempText);
-          if (!mdText) continue;
-          reactiveAnswer.message = mdText;
+          reactiveAnswer.message = mdText || tempText;
         }
 
         // 完整处理数据（上一步逐个对原始 Uint8Array 解析并输出，可能会在边界处出现错误字符，最终全量解析 Uint8Array 可修复此情况）
@@ -167,8 +167,7 @@ const ChatApp = {
         });
   
         const finalText = decoder.decode(rawData).replaceAll(messageSalt.value, '');
-        reactiveAnswer.message = finalText;
-        reactiveAnswer.displayMessage = marked.parse(finalText);
+        reactiveAnswer.message = marked.parse(finalText) || finalText;
       } catch (err) {
         questionError.value = String(err);
       }
@@ -238,7 +237,7 @@ const ChatApp = {
         <div
           class="px-6 py-4 flex-grow-1 flex-shrink-1 border"
         >
-          <div v-html="c.displayMessage || c.message"/>
+          <div v-html="c.message"/>
           <v-img
             class="mt-4"
             v-if="c.imgURL"
